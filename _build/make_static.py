@@ -46,7 +46,7 @@ html=f'''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive"><title>{{ger}} Prévia · {nome}</title>
 <style>*,*::before,*::after{{box-sizing:border-box}}html{{-webkit-text-size-adjust:100%}}body{{margin:0}}</style>
-<style>.side{{display:none!important}}.layout{{grid-template-columns:minmax(0,1fr)!important;justify-items:center}}.stage{{position:static!important}}.phone.auto{{height:auto!important;min-height:0!important}}.phone.auto .scr{{position:relative;inset:auto;overflow:visible}}.phone.auto .sb,.phone.auto .ig-top,.phone.auto .li-top,.phone.auto .fb-top,.phone.auto .igp-tabs{{position:relative!important;top:auto!important}}</style>
+<style>.side{{display:none!important}}.layout{{grid-template-columns:minmax(0,1fr)!important;justify-items:center}}.stage{{position:static!important}}.statmark{{display:none!important}}.phone.auto{{height:auto!important;min-height:0!important}}.phone.auto .scr{{position:relative;inset:auto;overflow:visible}}.phone.auto .sb,.phone.auto .ig-top,.phone.auto .li-top,.phone.auto .fb-top,.phone.auto .igp-tabs{{position:relative!important;top:auto!important}}</style>
 <script>window.__PREVIA={payload};</script>
 </head><body>
 {s}
