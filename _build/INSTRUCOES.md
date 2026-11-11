@@ -26,7 +26,7 @@ Progresso: o simulador mostra uma barra de progresso lendo o campo `etapa` do pe
    (rode na raiz do repositório; ele cria ou substitui a pasta `<slug>/`). Antes, apague `<slug>/` se já existir, para não sobrar mídia antiga.
 6. `git add -A && git commit -m "Prévia <slug>" && git push`. Não commite a pasta `work/`.
 7. Avise o simulador: ArtifactData `update` em `compartilhamentos/<id>` com
-   `previaUrl` = "https://gervmkt.github.io/previas/<slug>/", `atualizadoEm` = agora em ISO 8601 (UTC), `status` = "pronto", `erro` = "".
+   `previaUrl` = "https://gervmkt.github.io/previas/<slug>/?v=<AAAAMMDDHHMM do momento, em UTC>" (o `?v=` força o navegador do cliente a buscar a versão nova), `atualizadoEm` = agora em ISO 8601 (UTC), `status` = "pronto", `erro` = "".
    Se algo falhar, grave `status` = "erro", `erro` = motivo curto em português, `erroEm` = agora.
 
 Regras: não mexa em outras pastas de clientes. Nunca coloque `notas` dos posts na prévia (o make_static já remove).
