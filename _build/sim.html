@@ -128,6 +128,7 @@ input[type=range]{padding:0;background:none}
 .toggles{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .tg{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
 .tg[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);background:var(--sunk)}
+.linkbtn{all:unset;cursor:pointer;text-decoration:underline;font-weight:700}
 .prog{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--brand-soft);display:flex;flex-direction:column;gap:8px}
 .prog-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .prog-bar{height:10px;border-radius:99px;background:var(--surface);overflow:hidden;border:1px solid var(--line)}
@@ -522,8 +523,14 @@ function shareLine(p){const sh=shareOf(p.id);if(!sh)return"";
 function sharePhrase(p,sh){return`Gera o link da prévia do cliente "${p.nome||p.usuario}" no simulador {ger} (perfil ${p.id}).`}
 function openShare(){const p=pf();const sh=shareOf(p.id);
   const used=[...new Set(posts.filter(x=>x.perfil===p.id).flatMap(x=>x.redes||[]))];
-  edit={kind:"share",id:p.id,isNew:!sh,d:sh?JSON.parse(JSON.stringify(sh)):{redes:used.length?used:["ig"],filtro:"aprov",cliente:""},done:false};delete edit.d.id;renderAll();toSide()}
-function shareCount(d,pid){return posts.filter(x=>x.perfil===pid&&(x.redes||[]).some(r=>(d.redes||[]).includes(r)&&NETS[r].acc.includes(x.formato))&&passFiltro(x,d.filtro)).length}
+  edit={kind:"share",id:p.id,isNew:!sh,d:sh?JSON.parse(JSON.stringify(sh)):{redes:used.length?used:["ig"],filtro:"aprov",cliente:"",periodo:semanaDe(1)},done:false};delete edit.d.id;renderAll();toSide()}
+function shareBase(d,pid){return posts.filter(x=>x.perfil===pid&&(x.redes||[]).some(r=>(d.redes||[]).includes(r)&&NETS[r].acc.includes(x.formato))&&passFiltro(x,d.filtro))}
+function inPeriodo(x,d){const P=d.periodo;if(!P||!P.ini)return true;const dt=(x.data||"").slice(0,10);return!!dt&&dt>=P.ini&&dt<=P.fim}
+function shareCount(d,pid){return shareBase(d,pid).filter(x=>inPeriodo(x,d)).length}
+function isoD(t){return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")}
+function semanaDe(off){const t=new Date();const dow=(t.getDay()+6)%7;t.setDate(t.getDate()-dow+7*off);const a=isoD(t);t.setDate(t.getDate()+6);return{ini:a,fim:isoD(t)}}
+function dBR(iso,long){if(!iso)return"";const[y,m,dd]=iso.split("-").map(Number);const t=new Date(y,m-1,dd);return t.toLocaleDateString("pt-BR",long?{day:"numeric",month:"long"}:{day:"2-digit",month:"2-digit"})}
+function periodoModo(P){if(!P||!P.ini)return"todos";const a=semanaDe(0),b=semanaDe(1);if(P.ini===a.ini&&P.fim===a.fim)return"esta";if(P.ini===b.ini&&P.fim===b.fim)return"proxima";return"custom"}
 function passFiltro(x,f){return f==="emaprov"?x.status==="aprovacao":f==="aprov"?["aprovacao","aprovado","agendado","publicado"].includes(x.status):true}
 const TRIG_ID="trig_01STUwXrkQvx9eZGg8FBTkfd";const PREVIA_BASE="https://gervmkt.github.io/previas/";
 function slugify(t){return(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)}
@@ -550,17 +557,20 @@ function renderShare(){const d=edit.d,p=pf(),sh=shareOf(p.id),n=shareCount(d,p.i
    <div class="full" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">Compartilhar ${esc(p.nome||"")}</h2><button class="btn sm" type="button" data-act="cancel">Fechar</button></div>
    <p class="full sub" style="margin:0">Gera uma página que abre direto no navegador, sem login, só com este perfil e as redes escolhidas.</p>
    <div class="full"><h3 style="margin-bottom:6px">Redes que o cliente vai ver</h3><div class="chips">${Object.entries(NETS).map(([k,v])=>`<button class="chip" type="button" data-shr="${k}" aria-pressed="${(d.redes||[]).includes(k)}">${v.n}</button>`).join("")}</div></div>
+   <div class="full"><h3 style="margin-bottom:6px">Período da prévia</h3><div class="chips">${[["esta","Esta semana"],["proxima","Próxima semana"],["custom","Escolher datas"],["todos","Sem período"]].map(([k,v])=>`<button class="chip" type="button" data-per="${k}" aria-pressed="${periodoModo(d.periodo)===k||(k==="custom"&&d.perCustom)}">${v}</button>`).join("")}</div>
+   ${d.periodo&&d.periodo.ini?`<div class="acts" style="margin-top:8px"><label style="flex:1">De<input type="date" name="perIni" value="${esc(d.periodo.ini)}"></label><label style="flex:1">Até<input type="date" name="perFim" value="${esc(d.periodo.fim)}"></label></div><span class="help">A prévia mostra os dias de ${esc(dBR(d.periodo.ini,1))} a ${esc(dBR(d.periodo.fim,1))}. Entram os posts com "Data e hora" nesse intervalo.</span>`:`<span class="help">Sem período, entram todos os posts, sem a faixa de dias.</span>`}</div>
    <label class="full">Quais posts entram<select name="filtro">${FILTROS.map(([k,v])=>`<option value="${k}"${d.filtro===k?" selected":""}>${v}</option>`).join("")}</select></label>
    <label class="full">Final do endereço<input name="slug" value="${esc(d.slug||slugify(p.nome))}" placeholder="cardoso"${sh&&sh.previaUrl?" readonly":""}><span class="help">${sh&&sh.previaUrl?"O endereço não muda depois de criado, para o link do cliente continuar valendo.":`O link vai ficar: <b>${esc(url)}</b>`}</span></label>
    <label class="full">Para quem (só para você se lembrar)<input name="cliente" value="${esc(d.cliente)}" placeholder="Ex.: Ana, da Cardoso"></label>
-   <div class="full notice" style="margin:0">${n} post${n===1?"":"s"} vão para a prévia com essa escolha.</div>
+   ${(()=>{const base=shareBase(d,p.id),semData=d.periodo&&d.periodo.ini?base.filter(x=>!x.data):[],fora=d.periodo&&d.periodo.ini?base.filter(x=>x.data&&!inPeriodo(x,d)).length:0;
+     return`<div class="full notice${n?"":" bad"}" style="margin:0">${n?"":"Nenhum post nesse período. Mude as datas ou coloque data nos posts. "}${n} post${n===1?"":"s"} vão para a prévia${d.periodo&&d.periodo.ini?` (${fora} fora do período)`:""}.</div>${semData.length?`<div class="full warn">${semData.length} post${semData.length===1?" está":"s estão"} sem data e não ${semData.length===1?"entra":"entram"} na prévia: ${semData.slice(0,3).map(x=>`<button type="button" class="linkbtn" data-edit="${esc(x.id)}">${esc(((x.legenda||x.artTitulo||x.pergunta||FMT[x.formato][0])+"").split("\n")[0].slice(0,40))}</button>`).join(", ")}${semData.length>3?"…":""}. Toque para abrir e colocar a data.</div>`:""}`})()}
    ${st==="gerando"?`<div class="full prog" id="prog"><div class="prog-top"><b id="progLbl">Gerando o link…</b><span id="progPct" class="num">0%</span></div><div class="prog-bar"><i id="progFill"></i></div><div class="prog-steps">${ETAPAS.map((e,i)=>`<span data-step="${i}">${e[1]}</span>`).join("")}</div><span class="help" id="progTime">Costuma levar de 3 a 6 minutos. Pode fechar este painel; o link aparece aqui quando ficar pronto.</span></div>`:""}
    ${st==="erro"?`<div class="full warn">Não deu para gerar o link: ${esc(sh.erro||"erro desconhecido")}. Tente de novo ou peça ao Claude na conversa.</div>`:""}
    ${st==="manual"||edit.manual?`<div class="full" style="display:flex;flex-direction:column;gap:8px"><b>${TRIG_ID.startsWith("__")?"Para gerar o link, cole esta frase na conversa com o Claude:":"O botão automático não respondeu. Cole esta frase na conversa com o Claude:"}</b><div class="preview-cut" id="phrase" style="user-select:all">${esc(sharePhrase(p,d))}</div><div class="acts"><button class="btn sm" type="button" data-act="copyphrase">Copiar frase</button></div></div>`:""}
    ${sh&&sh.previaUrl&&st!=="gerando"?`<div class="full" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px"><b>Link do cliente${sh.atualizadoEm?` · atualizado ${esc(dtBR(sh.atualizadoEm))}`:""}</b><div class="preview-cut" id="plink" style="user-select:all">${esc(sh.previaUrl)}</div>
      <div class="acts"><button class="btn primary sm" type="button" data-act="copylink">Copiar link</button><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(linkMsg(sh,p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a><a class="btn sm" href="${esc(sh.previaUrl)}" target="_blank" rel="noopener">Abrir</a></div>
      <span class="help">Depois de mudar posts, clique em "Atualizar link". O endereço continua o mesmo; o cliente só precisa recarregar a página.</span></div>`:""}
-   <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="saveshare"${canWrite&&(d.redes||[]).length&&st!=="gerando"?"":" disabled"}>${sh&&sh.previaUrl?"Atualizar link":"Gerar link para o cliente"}</button>${sh?`<button class="btn danger" type="button" data-act="delshare">Parar de compartilhar</button>`:""}</div>
+   <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="saveshare"${canWrite&&(d.redes||[]).length&&st!=="gerando"&&n>0?"":" disabled"}>${sh&&sh.previaUrl?"Atualizar link":"Gerar link para o cliente"}</button>${sh?`<button class="btn danger" type="button" data-act="delshare">Parar de compartilhar</button>`:""}</div>
    ${sh?`<p class="full help" style="margin:0">"Parar de compartilhar" apaga o pedido daqui. Para tirar a página do ar, peça ao Claude: "apaga a prévia de ${esc(p.nome||"")}".</p>`:""}
   </form></div>`;startProg()}
 async function saveShare(){readShare();const p=pf(),d=edit.d,sh=shareOf(p.id);
@@ -573,7 +583,7 @@ async function saveShare(){readShare();const p=pf(),d=edit.d,sh=shareOf(p.id);
   if(!ok){edit.manual=true;try{await upd("compartilhamentos",p.id,{status:"manual"})}catch(_){}}
   toast(ok?"Gerando o link…":"Pedido salvo");renderSide()}
 
-function readShare(){const f=$("#shf");if(!f)return;edit.d.filtro=f.filtro.value;edit.d.cliente=f.cliente.value;if(!f.slug.readOnly)edit.d.slug=f.slug.value}
+function readShare(){const f=$("#shf");if(!f)return;if(f.perIni&&f.perIni.value&&f.perFim&&f.perFim.value){let a=f.perIni.value,b=f.perFim.value;if(b<a)[a,b]=[b,a];edit.d.periodo={ini:a,fim:b}}edit.d.filtro=f.filtro.value;edit.d.cliente=f.cliente.value;if(!f.slug.readOnly)edit.d.slug=f.slug.value}
 function renderSide(){
   if(edit)return edit.kind==="post"?renderPostEditor():edit.kind==="share"?renderShare():renderPerfilEditor();
   const p=pf();
@@ -641,7 +651,7 @@ function renderPostEditor(){const d=edit.d,ok=canWrite;
    ${many&&(d.redes||[]).includes("li")?`<label class="full">Título do documento (LinkedIn)<input name="docTitulo" value="${esc(d.docTitulo)}" placeholder="Ex.: 5 erros no LinkedIn de advogados"></label>`:""}`}
    <div class="sec">Planejamento</div>
    <label>Status<select name="status">${STAT.map(s=>`<option value="${s[0]}"${d.status===s[0]?" selected":""}>${s[1]}</option>`).join("")}</select></label>
-   <label>Data e hora<input type="datetime-local" name="data" value="${esc(d.data)}"></label>
+   <label>Data e hora de publicação<input type="datetime-local" name="data" value="${esc(d.data)}"></label>
    <label class="full">Notas internas<input name="notas" value="${esc(d.notas)}" placeholder="Não aparece na prévia"></label>
    <div class="full warns" id="warns"></div>
    <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="save"${ok?"":" disabled"}>Salvar</button>${edit.isNew?"":`<button class="btn" type="button" data-act="dup"${ok?"":" disabled"}>Duplicar</button><button class="btn danger" type="button" data-act="del"${ok?"":" disabled"}>Excluir</button>`}<span class="sub" id="upMsg"></span></div>
@@ -962,6 +972,7 @@ document.addEventListener("click",e=>{const t=e.target;
   const fl=t.closest("[data-filt]");if(fl){filt=fl.dataset.filt;ls.set("sim-filt",filt);renderSide();return}
   const ed=t.closest("[data-edit]");if(ed){if(edit&&edit.kind==="post"&&edit.id!==ed.dataset.edit)readForm();pendingFocus=true;openPost(ed.dataset.edit);return}
   const pg=t.closest("[data-pfgo]");if(pg){cur=pg.dataset.pfgo;ls.set("sim-pf",cur);renderAll();return}
+  const per=t.closest("[data-per]");if(per&&edit&&edit.kind==="share"){readShare();const k=per.dataset.per;edit.d.perCustom=k==="custom";edit.d.periodo=k==="esta"?semanaDe(0):k==="proxima"?semanaDe(1):k==="custom"?(edit.d.periodo&&edit.d.periodo.ini?edit.d.periodo:semanaDe(0)):null;renderSide();return}
   const shr=t.closest("[data-shr]");if(shr&&edit&&edit.kind==="share"){readShare();const s2=new Set(edit.d.redes||[]);s2.has(shr.dataset.shr)?s2.delete(shr.dataset.shr):s2.add(shr.dataset.shr);edit.d.redes=[...s2];edit.done=false;renderSide();return}
   const ft=t.closest("[data-fmt]");if(ft&&edit){readForm();edit.d.formato=ft.dataset.fmt;{const ok=(edit.d.redes||[]).filter(r=>NETS[r].acc.includes(edit.d.formato));edit.d.redes=ok.length?ok:[Object.keys(NETS).find(r=>NETS[r].acc.includes(edit.d.formato))];if(!edit.d.redes.includes(net))net=edit.d.redes[0]}if(["foto","story","reel"].includes(edit.d.formato)&&(edit.d.midias||[]).length>1)toast("Esse formato usa só o primeiro item.");autoView(edit.d);renderAll();return}
   const rd=t.closest("[data-rede]");if(rd&&edit){readForm();const r=rd.dataset.rede,s=new Set(edit.d.redes||[]);s.has(r)?s.delete(r):s.add(r);edit.d.redes=[...s];if(s.has(r)&&r!==net){net=r;autoView(edit.d)}renderAll();return}
@@ -1000,7 +1011,7 @@ document.addEventListener("click",e=>{const t=e.target;
 });
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-edit]"))e.target.click();if(e.key==="Escape"&&edit){edit=null;renderAll()}});
 $("#side").addEventListener("input",e=>{if(!edit)return;if(edit.kind==="share")return;const el=e.target;if(!el.name)return;readForm();if(el.name==="legenda")updCounters();schedPreview()});
-$("#side").addEventListener("change",e=>{if(!edit)return;if(edit.kind==="share"){readShare();if(e.target.name==="filtro"||e.target.name==="slug"){renderSide()}return}readForm();schedPreview()});
+$("#side").addEventListener("change",e=>{if(!edit)return;if(edit.kind==="share"){readShare();if(["filtro","slug","perIni","perFim"].includes(e.target.name)){renderSide()}return}readForm();schedPreview()});
 $("#scr").addEventListener("scroll",e=>{const t=e.target;if(t.classList&&t.classList.contains("car-track"))carUpd(t)},true);
 $("#pfSel").onchange=e=>{cur=e.target.value;ls.set("sim-pf",cur);if(edit&&edit.kind==="post")edit=null;renderAll()};
 $("#newPost").onclick=()=>newPost();

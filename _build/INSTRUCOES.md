@@ -19,10 +19,12 @@ Progresso: o simulador mostra uma barra de progresso lendo o campo `etapa` do pe
 2. Leia o perfil: ArtifactData `get`, collection `perfis`, doc_id = id do perfil. Salve o objeto `data` em `work/perfil.json` (acrescente `"id"`).
 3. Leia os posts do perfil: ArtifactData `query`, collection `posts`, query.where = [["perfil","==","<id>"]], com `out_dir` = `work/raw`.
    Copie os arquivos de `work/raw/posts/*.json` para `work/posts/`.
+   Se o pedido tiver `periodo`, só entram posts cuja `data` (AAAA-MM-DD…) esteja entre `periodo.ini` e `periodo.fim`, inclusive.
 4. Baixe as mídias: para cada `a` em `midias[]` e `capa` dos posts que vão entrar, e para `perfil.foto`,
    use o Artifact `read` com a url do simulador e `path` = o id (uma chamada por id). Copie cada arquivo salvo para `work/media/`.
    Só baixe as mídias dos posts que passam no filtro e nas redes do pedido.
-5. Gere: `python3 _build/make_static.py <slug> work/perfil.json work/posts <redes,separadas,por,virgula> <filtro> work/media .`
+5. Gere: `python3 _build/make_static.py <slug> work/perfil.json work/posts <redes,separadas,por,virgula> <filtro> work/media . <periodo.ini> <periodo.fim>`
+   (os dois últimos só se o pedido tiver `periodo` com `ini` e `fim`, no formato AAAA-MM-DD; sem período, omita).
    (rode na raiz do repositório; ele cria ou substitui a pasta `<slug>/`). Antes, apague `<slug>/` se já existir, para não sobrar mídia antiga.
 6. `git add -A && git commit -m "Prévia <slug>" && git push`. Não commite a pasta `work/`.
 7. Avise o simulador: ArtifactData `update` em `compartilhamentos/<id>` com
