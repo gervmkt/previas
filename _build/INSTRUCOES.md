@@ -9,6 +9,10 @@ do banco do artefato, com o id do perfil como id do documento.
 
 ## Passo a passo (para o Claude)
 
+Progresso: o simulador mostra uma barra de progresso lendo o campo `etapa` do pedido. Atualize esse campo
+(ArtifactData `update` em `compartilhamentos/<id>`, só o campo `etapa`) ao começar cada fase:
+`lendo` (passos 1 a 3), `midias` (passo 4), `montando` (passo 5), `publicando` (passo 6), `site` (junto com o passo 7).
+
 1. Leia o pedido: ArtifactData `get`, url do simulador, collection `compartilhamentos`, doc_id = id do perfil.
    Campos: `redes` (ig, li, tt, fb), `filtro` (todos | aprov | emaprov), `slug`, `perfil`.
    Se não houver id no pedido, liste `compartilhamentos` e trate todos com `status` "gerando" ou "manual".

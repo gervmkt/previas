@@ -43,6 +43,7 @@ nav button:hover{color:var(--band-fg)}
 nav button[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
 .btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}
 .btn:hover{border-color:var(--fg)}
+a.btn{text-decoration:none;color:var(--fg);display:inline-flex;align-items:center}
 .btn.primary{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
 .btn.outline{background:transparent;border-color:#444;color:var(--band-fg)}
 .btn.outline:hover{border-color:var(--band-fg)}
@@ -127,6 +128,14 @@ input[type=range]{padding:0;background:none}
 .toggles{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .tg{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
 .tg[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);background:var(--sunk)}
+.prog{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--brand-soft);display:flex;flex-direction:column;gap:8px}
+.prog-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.prog-bar{height:10px;border-radius:99px;background:var(--surface);overflow:hidden;border:1px solid var(--line)}
+.prog-bar i{display:block;height:100%;width:0;background:var(--yellow);border-radius:99px;transition:width .9s ease}
+.prog-steps{display:flex;justify-content:space-between;gap:4px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.prog-steps .done{color:var(--fg)}
+.prog-steps .on{color:var(--fg);font-weight:700}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--yellow);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60}
 
 /* ===== celular ===== */
@@ -509,7 +518,7 @@ function shareOf(id){return shares.find(x=>x.id===id)}
 function dtBR(iso){if(!iso)return"";const t=new Date(iso);return isNaN(t)?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
 function shareLine(p){const sh=shareOf(p.id);if(!sh)return"";
   const st=shareState(sh);
-  return`<div class="rsub" style="margin-top:4px">${sh.previaUrl?`<a href="${esc(sh.previaUrl)}" target="_blank" rel="noopener" style="color:var(--brand-text);font-weight:700">Link do cliente</a>`:"Link do cliente"} · ${(sh.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")} · ${st==="gerando"?`<span class="pill warn">Gerando…</span>`:st==="erro"?`<span class="pill bad">Erro</span>`:st==="manual"?`<span class="pill warn">Pedido manual</span>`:`atualizado ${esc(dtBR(sh.atualizadoEm))}`}</div>`}
+  return`<div class="rsub" style="margin-top:4px">${sh.previaUrl?`<a href="${esc(sh.previaUrl)}" target="_blank" rel="noopener" style="color:var(--brand-text);font-weight:700">Link do cliente</a>`:"Link do cliente"} · ${(sh.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")} · ${st==="gerando"?`<span class="pill warn">Gerando… ${progOf(sh).pct}%</span>`:st==="erro"?`<span class="pill bad">Erro</span>`:st==="manual"?`<span class="pill warn">Pedido manual</span>`:`atualizado ${esc(dtBR(sh.atualizadoEm))}`}</div>`}
 function sharePhrase(p,sh){return`Gera o link da prévia do cliente "${p.nome||p.usuario}" no simulador {ger} (perfil ${p.id}).`}
 function openShare(){const p=pf();const sh=shareOf(p.id);
   const used=[...new Set(posts.filter(x=>x.perfil===p.id).flatMap(x=>x.redes||[]))];
@@ -520,6 +529,21 @@ const TRIG_ID="trig_01STUwXrkQvx9eZGg8FBTkfd";const PREVIA_BASE="https://gervmkt
 function slugify(t){return(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)}
 function shareState(sh){if(!sh)return"novo";if(sh.status==="erro"&&(!sh.atualizadoEm||sh.erroEm>=sh.pedidoEm))return"erro";if(sh.pedidoEm&&(!sh.atualizadoEm||sh.pedidoEm>sh.atualizadoEm))return sh.status==="manual"?"manual":"gerando";return"pronto"}
 function linkMsg(sh,p){return`Oi! Aqui está a prévia dos posts da ${p.nome||""} para você ver como vão ficar nas redes: ${sh.previaUrl}`}
+const ETAPAS=[["pedido","Pedido",4],["lendo","Lendo posts",15],["midias","Imagens",40],["montando","Montando",65],["publicando","Publicando",82],["site","No ar",95]];
+function progOf(sh){const t0=Date.parse(sh&&sh.pedidoEm)||Date.now(),el=(Date.now()-t0)/1000;
+  let k=Math.max(0,ETAPAS.findIndex(e=>e[0]===(sh&&sh.etapa)));if(k<0)k=0;
+  const floor=ETAPAS[k][2],ceil=k<ETAPAS.length-1?ETAPAS[k+1][2]-1:97;
+  const est=Math.min(92,8+88*(1-Math.exp(-el/170)));
+  return{pct:Math.round(Math.min(ceil,Math.max(floor,est))),k,el}}
+function fmtEl(s){s=Math.max(0,Math.round(s));return s<60?s+" s":Math.floor(s/60)+" min "+String(s%60).padStart(2,"0")+" s"}
+let progTimer=null;
+function tickProg(){const el=$("#prog");const p=pf(),sh=shareOf(p&&p.id);
+  if(!el||!sh||shareState(sh)!=="gerando"){clearInterval(progTimer);progTimer=null;return}
+  const g=progOf(sh);$("#progFill").style.width=g.pct+"%";$("#progPct").textContent=g.pct+"%";
+  $("#progLbl").textContent=(g.el>600?"Está demorando mais que o normal… ":"")+ETAPAS[g.k][1]+"…";
+  el.querySelectorAll("[data-step]").forEach(x=>{const i=+x.dataset.step;x.className=i<g.k?"done":i===g.k?"on":""});
+  $("#progTime").textContent=`${fmtEl(g.el)} até agora · costuma levar de 3 a 6 minutos. Pode fechar este painel; o link aparece aqui quando ficar pronto.`}
+function startProg(){if(progTimer)clearInterval(progTimer);if(!$("#prog"))return;tickProg();progTimer=setInterval(tickProg,1000)}
 function renderShare(){const d=edit.d,p=pf(),sh=shareOf(p.id),n=shareCount(d,p.id),st=shareState(sh);
   const url=PREVIA_BASE+(d.slug||slugify(p.nome))+"/";
   $("#side").innerHTML=`<div class="panel"><form id="shf" class="fields" autocomplete="off" onsubmit="return false">
@@ -530,7 +554,7 @@ function renderShare(){const d=edit.d,p=pf(),sh=shareOf(p.id),n=shareCount(d,p.i
    <label class="full">Final do endereço<input name="slug" value="${esc(d.slug||slugify(p.nome))}" placeholder="cardoso"${sh&&sh.previaUrl?" readonly":""}><span class="help">${sh&&sh.previaUrl?"O endereço não muda depois de criado, para o link do cliente continuar valendo.":`O link vai ficar: <b>${esc(url)}</b>`}</span></label>
    <label class="full">Para quem (só para você se lembrar)<input name="cliente" value="${esc(d.cliente)}" placeholder="Ex.: Ana, da Cardoso"></label>
    <div class="full notice" style="margin:0">${n} post${n===1?"":"s"} vão para a prévia com essa escolha.</div>
-   ${st==="gerando"?`<div class="full notice" style="margin:0;background:var(--brand-soft)"><b>Gerando o link…</b> Costuma levar de 3 a 6 minutos. Pode fechar este painel; o link aparece aqui e no cartão do perfil quando ficar pronto.</div>`:""}
+   ${st==="gerando"?`<div class="full prog" id="prog"><div class="prog-top"><b id="progLbl">Gerando o link…</b><span id="progPct" class="num">0%</span></div><div class="prog-bar"><i id="progFill"></i></div><div class="prog-steps">${ETAPAS.map((e,i)=>`<span data-step="${i}">${e[1]}</span>`).join("")}</div><span class="help" id="progTime">Costuma levar de 3 a 6 minutos. Pode fechar este painel; o link aparece aqui quando ficar pronto.</span></div>`:""}
    ${st==="erro"?`<div class="full warn">Não deu para gerar o link: ${esc(sh.erro||"erro desconhecido")}. Tente de novo ou peça ao Claude na conversa.</div>`:""}
    ${st==="manual"||edit.manual?`<div class="full" style="display:flex;flex-direction:column;gap:8px"><b>${TRIG_ID.startsWith("__")?"Para gerar o link, cole esta frase na conversa com o Claude:":"O botão automático não respondeu. Cole esta frase na conversa com o Claude:"}</b><div class="preview-cut" id="phrase" style="user-select:all">${esc(sharePhrase(p,d))}</div><div class="acts"><button class="btn sm" type="button" data-act="copyphrase">Copiar frase</button></div></div>`:""}
    ${sh&&sh.previaUrl&&st!=="gerando"?`<div class="full" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px"><b>Link do cliente${sh.atualizadoEm?` · atualizado ${esc(dtBR(sh.atualizadoEm))}`:""}</b><div class="preview-cut" id="plink" style="user-select:all">${esc(sh.previaUrl)}</div>
@@ -538,7 +562,7 @@ function renderShare(){const d=edit.d,p=pf(),sh=shareOf(p.id),n=shareCount(d,p.i
      <span class="help">Depois de mudar posts, clique em "Atualizar link". O endereço continua o mesmo; o cliente só precisa recarregar a página.</span></div>`:""}
    <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="saveshare"${canWrite&&(d.redes||[]).length&&st!=="gerando"?"":" disabled"}>${sh&&sh.previaUrl?"Atualizar link":"Gerar link para o cliente"}</button>${sh?`<button class="btn danger" type="button" data-act="delshare">Parar de compartilhar</button>`:""}</div>
    ${sh?`<p class="full help" style="margin:0">"Parar de compartilhar" apaga o pedido daqui. Para tirar a página do ar, peça ao Claude: "apaga a prévia de ${esc(p.nome||"")}".</p>`:""}
-  </form></div>`}
+  </form></div>`;startProg()}
 async function saveShare(){readShare();const p=pf(),d=edit.d,sh=shareOf(p.id);
   d.slug=slugify(d.slug||p.nome);if(!d.slug)return toast("Escolha o final do endereço.");
   if(shares.some(x=>x.id!==p.id&&x.slug===d.slug))return toast("Esse endereço já é de outro perfil. Escolha outro final.");
@@ -1015,7 +1039,7 @@ setStatus("Conectando ao banco do simulador…");
   let got={a:false,b:false};const timer=setTimeout(()=>{if(!got.a)setStatus("Os dados ainda não chegaram. Verifique a conexão; a página continua tentando.",true)},10000);
   const done=()=>{if(got.a&&got.b){clearTimeout(timer);setStatus(canWrite?"":"Você está vendo em modo leitura: pode navegar pelas prévias, mas não editar.")}};
   db.collection("perfis").onSnapshot(s=>{perfis=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt"));if(!perfis.some(p=>p.id===cur))cur=(perfis[0]||{}).id||"";if(!s.metadata.fromCache)got.a=true;done();if(edit)renderTop(),renderPhone();else renderAll()},()=>{clearTimeout(timer);setStatus("A conexão com o banco caiu. Recarregue a página.",true)});
-  db.collection("compartilhamentos").onSnapshot(s=>{shares=s.docs.map(d=>({id:d.id,...d.data()}));if(edit&&edit.kind==="share"){readShare();renderSide()}else if(!edit)renderSide()},()=>{});
+  db.collection("compartilhamentos").onSnapshot(s=>{const prev=Object.fromEntries(shares.map(x=>[x.id,shareState(x)]));shares=s.docs.map(d=>({id:d.id,...d.data()}));shares.forEach(x=>{if(prev[x.id]==="gerando"&&shareState(x)==="pronto")toast("Link pronto: "+(x.perfilNome||""));if(prev[x.id]==="gerando"&&shareState(x)==="erro")toast("Não deu para gerar o link")});if(edit&&edit.kind==="share"){readShare();renderSide()}else if(!edit)renderSide()},()=>{});
   db.collection("posts").onSnapshot(s=>{posts=s.docs.map(d=>({id:d.id,...d.data()}));if(!s.metadata.fromCache)got.b=true;done();if(edit)renderPhone();else renderAll()},()=>{});
 })();
 </script>
