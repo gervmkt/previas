@@ -1,0 +1,1021 @@
+<title>{ger} Simulador</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: faixa preta da {ger} com redes; coluna da esquerda alterna entre lista de posts e editor; à direita, o celular com a prévia ao vivo. */
+:root{
+  --ink:#111111; --yellow:#FFC800;
+  --band:#111111; --band-fg:#f4f4f0; --band-muted:#a3a39b;
+  --bg:#f4f4f1; --surface:#ffffff; --sunk:#ebebe6; --line:#dadad3;
+  --fg:#141414; --muted:#5e5e57; --brand-text:#7a5c00; --brand-soft:#fff3c4;
+  --ok:#2c7a4b; --warn:#9a5b06; --bad:#b0332a; --info:#2d5b94;
+  --ok-soft:#e0f0e5; --warn-soft:#fbe9cf; --bad-soft:#f7dfdc; --info-soft:#dfe8f4;
+  --font:"Proxima Nova","proxima-nova",Montserrat,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --band:#000000; --band-fg:#f4f4f0; --band-muted:#8e8e86;
+  --bg:#0d0d0d; --surface:#171717; --sunk:#202020; --line:#2e2e2e;
+  --fg:#f0f0ec; --muted:#a0a098; --brand-text:#FFC800; --brand-soft:#2e2608;
+  --ok:#72c690; --warn:#e8a94f; --bad:#ee8579; --info:#8ab2e6;
+  --ok-soft:#18301f; --warn-soft:#382811; --bad-soft:#3b1d1a; --info-soft:#18273a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --band:#000000; --band-fg:#f4f4f0; --band-muted:#8e8e86;
+  --bg:#0d0d0d; --surface:#171717; --sunk:#202020; --line:#2e2e2e;
+  --fg:#f0f0ec; --muted:#a0a098; --brand-text:#FFC800; --brand-soft:#2e2608;
+  --ok:#72c690; --warn:#e8a94f; --bad:#ee8579; --info:#8ab2e6;
+  --ok-soft:#18301f; --warn-soft:#382811; --bad-soft:#3b1d1a; --info-soft:#18273a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--font);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--band);color:var(--band-fg)}
+.hbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-block:14px 10px}
+.brand{font-weight:800;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--yellow)}
+.brand small{font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--band-fg);margin-left:8px}
+.grow{flex:1}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px}
+nav button{border:0;background:none;padding:7px 14px;border-radius:999px;color:var(--band-muted);cursor:pointer;white-space:nowrap;font-weight:600}
+nav button:hover{color:var(--band-fg)}
+nav button[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--fg)}
+.btn.primary{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+.btn.outline{background:transparent;border-color:#444;color:var(--band-fg)}
+.btn.outline:hover{border-color:var(--band-fg)}
+.btn.danger{color:var(--bad);border-color:var(--bad);background:transparent}
+.btn.sm{padding:5px 11px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+h2{font-weight:800;font-size:20px;line-height:1.2;margin:0;letter-spacing:-.01em}
+h3{font-weight:700;font-size:12px;line-height:1.3;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 10px}
+.sub{color:var(--muted);font-size:14px}
+.notice{padding:10px 14px;border-radius:var(--r);background:var(--info-soft);margin:16px 0 0;font-size:14px}
+.notice.bad{background:var(--bad-soft)}
+.pfsel{background:#222;border:1px solid #444;color:var(--band-fg);border-radius:999px;padding:7px 12px;font-weight:600;max-width:200px}
+main{padding-block:20px 56px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.side{scroll-margin-top:140px;display:flex;flex-direction:column;gap:16px;min-width:0}
+/* perfil */
+.pcard{display:flex;gap:14px;align-items:center}
+.pcard .av{width:56px;height:56px}
+.pcard .nm{font-weight:800;font-size:17px;line-height:1.2}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--sunk);color:var(--fg);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.info{background:var(--info-soft);color:var(--info)} .pill.brand{background:var(--brand-soft);color:var(--brand-text)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--yellow);border-color:var(--ink)}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{background:var(--yellow);color:var(--ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--yellow);color:var(--ink)}}
+/* lista de posts */
+.plist{display:flex;flex-direction:column}
+.prow{display:flex;gap:12px;align-items:center;padding:10px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.prow:hover{background:var(--sunk)}
+.prow.sel{background:var(--brand-soft)}
+.thumb{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--sunk);flex:none;display:grid;place-items:center;color:var(--muted);position:relative}
+.thumb img,.thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .badge{position:absolute;right:3px;top:3px;color:#fff;filter:drop-shadow(0 1px 2px rgb(0 0 0/.6))}
+.rname{font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsub{font-size:13px;color:var(--muted);line-height:1.35}
+.empty{color:var(--muted);font-size:14px;padding:18px 4px;text-align:center}
+/* editor */
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fields .full{grid-column:1/-1}
+.fields label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.fields .sec{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+@media (max-width:480px){.fields{grid-template-columns:minmax(0,1fr)}}
+input,select,textarea{background:var(--sunk);border:1px solid transparent;border-radius:8px;padding:9px 11px;font-size:14px;color:var(--fg);font-weight:500;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--yellow);background:var(--surface)}
+textarea{min-height:120px;resize:vertical;line-height:1.45}
+input[type=checkbox]{width:auto}
+input[type=range]{padding:0;background:none}
+.ckrow{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;color:var(--fg)!important}
+.help{font-size:12px;color:var(--muted);font-weight:500}
+.counters{display:flex;gap:6px;flex-wrap:wrap}
+.cnt{font:500 12px/1.4 var(--mono);padding:2px 8px;border-radius:6px;background:var(--sunk);color:var(--muted)}
+.cnt.over{background:var(--bad-soft);color:var(--bad)}
+.warns{display:flex;flex-direction:column;gap:6px}
+.warn{font-size:13px;padding:8px 11px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:16px;text-align:center;cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;background:var(--bg)}
+.drop:hover,.drop.over{border-color:var(--yellow);color:var(--fg);background:var(--brand-soft)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.mitem{position:relative;border-radius:8px;overflow:hidden;background:var(--sunk);aspect-ratio:4/5}
+.mitem img,.mitem video{width:100%;height:100%;object-fit:cover;display:block}
+.mitem .n{position:absolute;left:5px;top:5px;background:rgb(0 0 0/.65);color:#fff;font:600 11px/1 var(--mono);padding:3px 5px;border-radius:5px}
+.mitem .mb{position:absolute;inset:auto 0 0 0;display:flex;justify-content:space-between;padding:4px;background:linear-gradient(transparent,rgb(0 0 0/.6))}
+.mitem .mb button{border:0;background:rgb(255 255 255/.92);color:#111;border-radius:6px;width:24px;height:24px;cursor:pointer;font-weight:800;display:grid;place-items:center;padding:0}
+.mitem.up{display:grid;place-items:center;font-size:12px;color:var(--muted);font-weight:600}
+.sticky-acts{position:sticky;bottom:0;background:var(--surface);padding-top:12px;border-top:1px solid var(--line);margin-top:4px}
+.preview-cut{font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;white-space:pre-wrap;color:var(--fg)}
+.preview-cut i{color:var(--muted);font-style:normal}
+/* palco */
+.stage{width:412px;display:flex;flex-direction:column;align-items:center;gap:12px;position:sticky;top:120px}
+@media (max-width:980px){.stage{position:static;width:100%;order:-1}.side{order:0}}
+@media (max-width:700px){header{position:static}.pfsel{max-width:150px}}
+.mobonly{display:none}@media (max-width:980px){.mobonly{display:inline-block}}
+.vtabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap;justify-content:center}
+.vtabs button{border:0;background:none;padding:6px 14px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted)}
+.vtabs button[aria-selected="true"]{background:var(--ink);color:var(--yellow)}
+:root[data-theme="dark"] .vtabs button[aria-selected="true"]{background:var(--yellow);color:var(--ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .vtabs button[aria-selected="true"]{background:var(--yellow);color:var(--ink)}}
+.toggles{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.tg{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tg[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);background:var(--sunk)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--yellow);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60}
+
+/* ===== celular ===== */
+.phone{--m-bg:#fff;--m-fg:#000;--m-muted:#737373;--m-line:#dbdbdb;--m-link:#00376b;--m-blue:#0095f6;--m-page:#fff;--m-card:#fff;--m-chip:#efefef;
+  width:390px;max-width:100%;height:min(812px,calc(100vh - 230px));min-height:560px;border-radius:44px;border:11px solid #0b0b0b;box-shadow:0 0 0 1px #333,0 30px 60px -20px rgb(0 0 0/.35);
+  background:var(--m-page);color:var(--m-fg);position:relative;overflow:hidden;font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;isolation:isolate}
+@media (max-width:980px){.phone{height:760px}}
+@media (max-width:440px){.phone{height:min(720px,calc(100svh - 150px));border-width:8px;border-radius:36px}}
+.phone.dark{--m-bg:#000;--m-fg:#f5f5f5;--m-muted:#a8a8a8;--m-line:#262626;--m-link:#e0f1ff;--m-page:#000;--m-card:#000;--m-chip:#262626}
+.phone.li{--m-page:#f4f2ee;--m-card:#fff;--m-muted:#666;--m-blue:#0a66c2;--m-line:#e8e8e8}
+.phone.li.dark{--m-page:#000;--m-card:#1b1f23;--m-muted:#a6a6a6;--m-blue:#71b7fb;--m-line:#38434f}
+.phone.fb{--m-page:#c9ccd1;--m-card:#fff;--m-muted:#65676b;--m-blue:#0866ff;--m-line:#e4e6eb;--m-chip:#f0f2f5}
+.phone.fb.dark{--m-page:#000;--m-card:#242526;--m-muted:#b0b3b8;--m-blue:#2d88ff;--m-line:#3e4042;--m-chip:#3a3b3c}
+.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;background:var(--m-page)}
+.scr::-webkit-scrollbar{display:none}
+.phone *{box-sizing:border-box}
+.phone button{background:none;border:0;padding:0;color:inherit;cursor:pointer;font:inherit}
+.phone svg{display:block}
+.sb{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font-weight:600;font-size:15px;position:sticky;top:0;z-index:6;background:var(--m-bg)}
+.sb.ov{position:absolute;inset:0 0 auto;background:transparent;color:#fff;z-index:30}
+.sb .sbi{display:flex;gap:5px;align-items:center}
+.notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:112px;height:30px;border-radius:20px;background:#000;z-index:40;pointer-events:none}
+.mbar{position:sticky;bottom:0;z-index:6;display:flex;justify-content:space-around;align-items:center;height:56px;padding-bottom:6px;background:var(--m-bg);border-top:1px solid var(--m-line)}
+.mbar.abs{position:absolute;inset:auto 0 0 0}
+.mbar .lbl{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--m-muted)}
+.mbar .lbl.on{color:var(--m-fg)}
+.av{border-radius:50%;overflow:hidden;background:var(--yellow);color:#111;display:grid;place-items:center;font-weight:800;flex:none}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.ring{padding:2px;border-radius:50%;background:conic-gradient(from 210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34);flex:none;display:grid;place-items:center}
+.ring>.av{border:2px solid var(--m-bg)}
+.ring.seen{background:var(--m-line)}
+.verif{display:inline-block;vertical-align:-2px;margin-left:3px}
+.tag{color:var(--m-link)}
+.muted{color:var(--m-muted)}
+.more{color:var(--m-muted);cursor:pointer}
+.md{position:relative;overflow:hidden;background:#111;width:100%}
+.md>img,.md>video,.slide>img,.slide>video{width:100%;height:100%;object-fit:cover;display:block}
+.car{position:relative;width:100%;height:100%}
+.car-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100%;scrollbar-width:none}
+.car-track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:start;height:100%;position:relative;background:#111}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:30px;height:30px;border-radius:50%;background:rgb(255 255 255/.9)!important;color:#111!important;display:grid!important;place-items:center;box-shadow:0 1px 4px rgb(0 0 0/.3)}
+.car-btn[hidden]{display:none!important}
+.car-btn.prev{left:10px}.car-btn.next{right:10px}
+.car-btn:hover{background:#fff!important}
+.car-track{cursor:grab;user-select:none}
+.car-track.dragging{cursor:grabbing;scroll-snap-type:none}
+.car-track img{-webkit-user-drag:none;pointer-events:none}
+.car-n{position:absolute;top:12px;right:12px;background:rgb(18 18 18/.72);color:#fff;font-size:12px;font-weight:600;border-radius:12px;padding:3px 8px;z-index:2}
+.dots{display:flex;gap:4px;justify-content:center;align-items:center}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--m-line)}
+.dots i.on{background:var(--m-blue)}
+.vbadge{position:absolute;bottom:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgb(0 0 0/.55);color:#fff;display:grid;place-items:center;z-index:2}
+.nomedia{display:grid;place-items:center;height:100%;color:#888;font-size:13px;background:repeating-linear-gradient(45deg,#1d1d1d 0 12px,#232323 12px 24px);text-align:center;padding:20px}
+.li-doc .statmark{top:44px}
+.fsv .statmark{top:100px;left:14px}
+.pinned{outline:3px solid var(--yellow);outline-offset:-3px}
+.statmark{position:absolute;left:8px;top:8px;z-index:3;background:var(--yellow);color:#111;font:700 10.5px/1 var(--font);padding:4px 7px;border-radius:99px;letter-spacing:.02em}
+/* Instagram */
+.ig-top{display:flex;align-items:center;gap:18px;padding:4px 14px 8px;background:var(--m-bg);position:sticky;top:44px;z-index:5}
+.ig-word{font-size:22px;font-weight:700;letter-spacing:-.02em;flex:1;display:flex;align-items:center;gap:4px}
+.ig-tray{display:flex;gap:14px;overflow-x:auto;padding:4px 12px 10px;scrollbar-width:none;border-bottom:1px solid var(--m-line);background:var(--m-bg)}
+.ig-tray::-webkit-scrollbar{display:none}
+.ig-tray .it{display:flex;flex-direction:column;align-items:center;gap:4px;width:72px;flex:none;font-size:11.5px;cursor:pointer}
+.ig-tray .it span{max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig-post{background:var(--m-bg);padding-bottom:12px}
+.ig-h{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.ig-u{flex:1;min-width:0;line-height:1.2;font-size:13.5px}
+.ig-u small{display:block;font-size:12px;color:var(--m-fg);font-weight:400}
+.ig-acts{display:flex;justify-content:space-between;align-items:center;padding:8px 12px 4px;position:relative}
+.ig-dots{display:flex;justify-content:center;padding-top:9px;margin-bottom:-4px}
+.ig-acts>.dots{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.ig-acts .l{display:flex;gap:14px;align-items:center}
+.ig-acts .l span{display:flex;gap:5px;align-items:center;font-weight:600;font-size:13.5px}
+.ig-acts .r{justify-self:end}
+.ig-txt{padding:2px 14px 0;font-size:14px;line-height:1.4}
+.ig-txt p{margin:3px 0;white-space:pre-wrap;word-wrap:break-word}
+.ig-txt .cm{color:var(--m-muted);font-size:14px;margin-top:4px}
+.ig-txt time{display:block;color:var(--m-muted);font-size:12px;margin-top:5px}
+.igp-top{display:flex;align-items:center;gap:16px;padding:4px 14px 10px;font-size:20px;font-weight:700;background:var(--m-bg)}
+.igp-head{display:flex;align-items:center;gap:22px;padding:4px 16px 10px}
+.igp-stats{display:flex;flex:1;justify-content:space-around;text-align:left}
+.igp-stats div{display:flex;flex-direction:column;font-size:13px;line-height:1.25}
+.igp-stats b{font-size:16px}
+.igp-bio{padding:0 16px;font-size:13.5px;line-height:1.38;white-space:pre-wrap}
+.igp-bio .cat{color:var(--m-muted)}
+.igp-bio a{color:var(--m-link);font-weight:600;text-decoration:none}
+.igp-btns{display:flex;gap:6px;padding:12px 16px 4px}
+.igp-btns span{flex:1;text-align:center;background:var(--m-chip);border-radius:8px;padding:7px 0;font-weight:600;font-size:13.5px}
+.igp-btns span.blue{background:var(--m-blue);color:#fff}
+.igp-hl{display:flex;gap:16px;padding:12px 16px 6px;overflow-x:auto;scrollbar-width:none}
+.igp-hl .h{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;flex:none;width:64px;cursor:pointer}
+.igp-hl .hc{width:64px;height:64px;border-radius:50%;border:1px solid var(--m-line);padding:3px;display:grid;place-items:center}
+.igp-hl .hc .av{width:100%;height:100%}
+.igp-tabs{display:flex;border-bottom:1px solid var(--m-line);margin-top:8px;position:sticky;top:44px;background:var(--m-bg);z-index:4}
+.igp-tabs span{flex:1;display:grid;place-items:center;padding:10px 0;color:var(--m-muted)}
+.igp-tabs span.on{color:var(--m-fg);box-shadow:inset 0 -1px 0 var(--m-fg)}
+.igp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.tile{position:relative;aspect-ratio:3/4;overflow:hidden;background:#222;cursor:pointer}
+.tile>img,.tile>video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.tile .ti{position:absolute;top:7px;right:7px;color:#fff;filter:drop-shadow(0 1px 2px rgb(0 0 0/.5))}
+.tile .tv{position:absolute;left:7px;bottom:6px;color:#fff;font-size:12px;font-weight:600;display:flex;gap:3px;align-items:center;filter:drop-shadow(0 1px 2px rgb(0 0 0/.6))}
+.tile.dragging{opacity:.35}
+.tile.over{outline:3px solid var(--yellow);outline-offset:-3px}
+.tile .nm{position:absolute;inset:0;display:grid;place-items:center;color:#aaa;font-size:11px;padding:6px;text-align:center}
+/* tela cheia: stories, reels, TikTok */
+.fsv{position:absolute;inset:0;background:#000;color:#fff;overflow:hidden}
+.vfeed{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none}
+.vfeed::-webkit-scrollbar{display:none}
+.vitem{height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden;background:#000}
+.vitem .md{position:absolute;inset:0;height:100%;background:#000}
+.vitem .md>img,.vitem .md>video,.vitem .slide>img,.vitem .slide>video{object-fit:cover}
+.vitem .md.contain>img,.vitem .md.contain>video,.vitem .contain .slide>img{object-fit:contain}
+.shade{position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(transparent,rgb(0 0 0/.55));pointer-events:none;z-index:1}
+.rail{position:absolute;right:10px;bottom:84px;display:flex;flex-direction:column;align-items:center;gap:18px;z-index:3;font-size:12px;font-weight:600;text-shadow:0 1px 2px rgb(0 0 0/.5)}
+.rail div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.rail svg{filter:drop-shadow(0 1px 2px rgb(0 0 0/.4))}
+.vcap{position:absolute;left:14px;right:78px;bottom:74px;z-index:3;font-size:14px;line-height:1.35;text-shadow:0 1px 2px rgb(0 0 0/.5)}
+.vcap .who{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:8px}
+.vcap .who .fol{border:1px solid rgb(255 255 255/.7);border-radius:8px;padding:3px 10px;font-size:13px;font-weight:600}
+.vcap p{margin:0;white-space:pre-wrap;word-wrap:break-word}
+.vcap .aud{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
+.vtop{position:absolute;inset:44px 0 auto 0;display:flex;align-items:center;justify-content:space-between;padding:4px 16px;z-index:4;font-weight:700;font-size:20px;text-shadow:0 1px 2px rgb(0 0 0/.4)}
+.disc{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#333 30%,#111 31%);border:6px solid #222;overflow:hidden;display:grid;place-items:center}
+@media (prefers-reduced-motion:no-preference){.disc{animation:spin 5s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}}
+.disc .av{width:20px;height:20px}
+.tt-tabs{position:absolute;inset:48px 0 auto 0;display:flex;justify-content:center;gap:18px;z-index:4;font-weight:700;font-size:16px;text-shadow:0 1px 2px rgb(0 0 0/.4)}
+.tt-tabs span{opacity:.7;padding-bottom:5px}
+.tt-tabs span.on{opacity:1;box-shadow:inset 0 -2px 0 #fff}
+.tt-follow{position:relative;margin-bottom:6px}
+.tt-follow i{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:#fe2c55;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:15px;line-height:1}
+.ttdots{position:absolute;bottom:62px;left:0;right:0;display:flex;justify-content:center;gap:4px;z-index:3}
+.ttdots i{width:6px;height:6px;border-radius:50%;background:rgb(255 255 255/.45)}
+.ttdots i.on{background:#fff}
+.mbar.dk{background:#000;border-color:#222;color:#fff}
+.mbar.dk .lbl{color:#bbb}.mbar.dk .lbl.on{color:#fff}
+.ttplus{width:44px;height:30px;border-radius:9px;background:#fff;color:#000;display:grid;place-items:center;box-shadow:-3px 0 0 #25f4ee,3px 0 0 #fe2c55}
+/* stories */
+.st-bars{position:absolute;inset:50px 8px auto 8px;display:flex;gap:3px;z-index:5}
+.st-bars i{flex:1;height:2.5px;border-radius:2px;background:rgb(255 255 255/.35);overflow:hidden}
+.st-bars i b{display:block;height:100%;width:0;background:#fff}
+.st-h{position:absolute;inset:60px 10px auto 12px;display:flex;align-items:center;gap:8px;z-index:5;font-size:13.5px;font-weight:600;text-shadow:0 1px 2px rgb(0 0 0/.4)}
+.st-h small{font-weight:400;opacity:.8}
+.st-zone{position:absolute;top:0;bottom:70px;width:35%;z-index:4}
+.st-zone.l{left:0}.st-zone.r{right:0}
+.st-foot{position:absolute;inset:auto 0 0 0;display:flex;align-items:center;gap:12px;padding:10px 14px 22px;z-index:5;background:#000}
+.st-foot .inp{flex:1;border:1px solid rgb(255 255 255/.6);border-radius:22px;padding:9px 16px;font-size:14px;color:rgb(255 255 255/.85)}
+.st-link{position:absolute;left:50%;top:68%;transform:translateX(-50%);z-index:5;background:#fff;color:#0a68d4;font-weight:700;font-size:14px;border-radius:9px;padding:8px 14px;display:flex;gap:6px;align-items:center;box-shadow:0 2px 8px rgb(0 0 0/.25);max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-media{position:absolute;inset:44px 0 70px 0;border-radius:10px;overflow:hidden;background:#111}
+.st-media>img,.st-media>video{width:100%;height:100%;object-fit:cover;display:block}
+.st-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:40px;color:#bbb;font-size:14px;line-height:1.5}
+.sz{position:absolute;inset:0;z-index:20;pointer-events:none}
+.sz div{position:absolute;background:repeating-linear-gradient(135deg,rgb(255 60 60/.28) 0 8px,rgb(255 60 60/.12) 8px 16px);border:1px dashed rgb(255 120 120/.9);color:#fff;font:700 10px/1.2 var(--font);display:flex;align-items:center;justify-content:center;text-align:center;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 2px #000}
+.stctl{position:absolute;right:12px;top:92px;z-index:6;background:rgb(0 0 0/.45);border-radius:99px;width:30px;height:30px;display:grid;place-items:center}
+/* LinkedIn */
+.li-top{display:flex;align-items:center;gap:10px;padding:6px 12px 8px;background:var(--m-card);position:sticky;top:44px;z-index:5;border-bottom:1px solid var(--m-line)}
+.li-search{flex:1;background:var(--m-chip);border-radius:6px;padding:6px 10px;color:var(--m-muted);display:flex;gap:8px;align-items:center;font-size:14px}
+.phone.li .li-search{background:#edf3f8}.phone.li.dark .li-search{background:#38434f}
+.li-post{background:var(--m-card);margin-top:8px}
+.li-h{display:flex;gap:8px;padding:12px 12px 6px;align-items:flex-start}
+.li-who{flex:1;min-width:0;font-size:12px;color:var(--m-muted);line-height:1.3}
+.li-who b{color:var(--m-fg);font-size:14px;font-weight:600}
+.li-who .hl{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.li-fol{color:var(--m-blue);font-weight:600;font-size:14px;display:flex;gap:3px;align-items:center;white-space:nowrap}
+.li-txt{padding:2px 12px 8px;font-size:14px;line-height:1.43;white-space:pre-wrap;word-wrap:break-word}
+.li-txt .more{color:var(--m-muted)}
+.li-doc{position:relative;background:#111}
+.li-doc .bar{position:absolute;inset:0 0 auto 0;z-index:2;background:rgb(0 0 0/.7);color:#fff;font-size:12.5px;padding:8px 12px;display:flex;justify-content:space-between;gap:8px}
+.li-doc .bar b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .li-card{margin:0 0 2px;background:var(--m-card);border-top:1px solid var(--m-line);border-bottom:1px solid var(--m-line);cursor:default}
+.li-card[data-art]{cursor:pointer}
+.li-cb{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--m-chip);font-size:12.5px;color:var(--m-muted)}
+.phone.li .li-cb{background:#eef3f8}.phone.li.dark .li-cb{background:#38434f}
+.li-cb b{color:var(--m-fg);font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li-evd{color:#b24020!important;font-weight:600;font-size:12px}
+.phone.dark .li-evd{color:#f5987e!important}
+.li-evb{align-self:flex-start;margin-top:8px;border:1px solid var(--m-blue);color:var(--m-blue);border-radius:99px;padding:4px 14px;font-weight:600;font-size:13.5px}
+.li-evbg{aspect-ratio:4;display:grid;place-items:center;background:linear-gradient(135deg,#dfe9f3,#c3d6ea);color:#56687a}
+.li-nl{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:13px;font-weight:600}
+.li-nl span:first-child{display:flex;gap:6px;align-items:center;color:var(--m-muted)}
+.li-sub{border:1px solid var(--m-blue);color:var(--m-blue);border-radius:99px;padding:3px 12px;font-size:13px}
+.li-poll{margin:0 12px 6px;border:1px solid var(--m-line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.li-poll b{font-size:14px;font-weight:600}
+.li-op{border:1px solid var(--m-blue);color:var(--m-blue);border-radius:99px;text-align:center;padding:7px 10px;font-weight:600;font-size:14px}
+.li-art-t{font-size:24px;line-height:1.25;font-weight:700;margin:14px 14px 4px;letter-spacing:-.01em}
+.li-art-b{padding:4px 14px 0;font-size:15.5px;line-height:1.6}
+.li-art-b p{margin:0 0 14px;white-space:pre-wrap;word-wrap:break-word}
+.fb-link{border-top:1px solid var(--m-line)}
+.fb-lb{background:var(--m-chip);padding:10px 14px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--m-muted)}
+.fb-lb b{color:var(--m-fg);font-size:15px;font-weight:600}
+.li-stats{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:12px;color:var(--m-muted)}
+.reacts{display:flex;align-items:center}
+.reacts i{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--m-card);margin-left:-4px;font-style:normal;font-size:9px}
+.reacts i:first-child{margin-left:0}
+.li-acts{display:flex;justify-content:space-around;border-top:1px solid var(--m-line);padding:4px 4px 8px;margin:0 12px}
+.li-acts span{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--m-muted);padding:6px 4px}
+/* Facebook */
+.fb-top{display:flex;align-items:center;gap:10px;padding:6px 14px 8px;background:var(--m-card);position:sticky;top:44px;z-index:5}
+.fb-word{flex:1;font-size:26px;font-weight:800;color:var(--m-blue);letter-spacing:-.03em}
+.phone.fb.dark .fb-word{color:#e4e6eb}
+.fb-ic{width:36px;height:36px;border-radius:50%;background:var(--m-chip);display:grid;place-items:center}
+.fb-comp{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--m-card);border-top:1px solid var(--m-line)}
+.fb-comp span{flex:1;border:1px solid var(--m-line);border-radius:20px;padding:8px 14px;color:var(--m-muted)}
+.fb-post{background:var(--m-card);margin-top:8px}
+.fb-h{display:flex;gap:9px;align-items:center;padding:12px 14px 8px}
+.fb-who{flex:1;font-size:12.5px;color:var(--m-muted);line-height:1.3}
+.fb-who b{color:var(--m-fg);font-size:15px;font-weight:600}
+.fb-txt{padding:0 14px 10px;font-size:15px;line-height:1.35;white-space:pre-wrap;word-wrap:break-word}
+.fb-txt .more{color:var(--m-muted);font-weight:600}
+.fb-col{display:grid;gap:3px;background:var(--m-card)}
+.fb-col .c{position:relative;overflow:hidden;background:#111}
+.fb-col .c img,.fb-col .c video{width:100%;height:100%;object-fit:cover;display:block}
+.fb-col .plus{position:absolute;inset:0;background:rgb(0 0 0/.5);color:#fff;display:grid;place-items:center;font-size:28px;font-weight:600}
+.fb-stats{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:14px;color:var(--m-muted)}
+.fb-acts{display:flex;justify-content:space-around;border-top:1px solid var(--m-line);margin:0 14px;padding:4px 0 6px}
+.fb-acts span{display:flex;gap:6px;align-items:center;font-size:14px;font-weight:600;color:var(--m-muted);padding:6px 4px}
+.fb-stories{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;background:var(--m-card);margin-top:8px;scrollbar-width:none}
+.fb-st{flex:none;width:100px;height:170px;border-radius:12px;overflow:hidden;position:relative;background:#333;cursor:pointer}
+.fb-st img,.fb-st video{width:100%;height:100%;object-fit:cover}
+.fb-st .av{position:absolute;top:8px;left:8px;width:34px;height:34px;border:3px solid var(--m-blue)}
+.fb-st b{position:absolute;left:8px;bottom:8px;right:8px;color:#fff;font-size:12.5px;text-shadow:0 1px 2px #000}
+.p-empty{padding:40px 24px;text-align:center;color:var(--m-muted);font-size:14px;line-height:1.5;background:var(--m-card)}
+.p-empty b{display:block;color:var(--m-fg);font-size:16px;margin-bottom:4px}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="hbar">
+      <span class="brand">{ger}<small>Simulador</small></span>
+      <span class="grow"></span>
+      <select class="pfsel" id="pfSel" aria-label="Perfil"></select>
+      <button class="btn outline" type="button" id="newPf">Novo perfil</button>
+      <button class="btn primary" type="button" id="newPost">Novo post</button>
+    </div>
+    <nav id="nets" role="tablist" aria-label="Rede"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="notice" id="status" hidden></div>
+  <div class="layout" style="margin-top:4px">
+    <div class="side" id="side"></div>
+    <section class="stage" aria-label="Prévia no celular">
+      <div class="vtabs" id="views" role="tablist" aria-label="Tela"></div>
+      <div class="phone" id="phone"><div class="notch"></div><div class="scr" id="scr"></div></div>
+      <div class="toggles" id="toggles"></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" hidden></div>
+<input type="file" id="fileIn" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm" multiple hidden>
+<input type="file" id="avIn" accept="image/png,image/jpeg,image/webp" hidden>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ls={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}}};
+function toast(t){const e=$("#toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+function setStatus(t,bad){const e=$("#status");e.hidden=!t;e.textContent=t||"";e.classList.toggle("bad",!!bad)}
+
+/* ---------- ícones ---------- */
+const P={
+ home:'<path d="M3.5 10.5 12 3.5l8.5 7V20a.5.5 0 0 1-.5.5h-5.2v-6.2H9.2v6.2H4a.5.5 0 0 1-.5-.5z"/>',
+ search:'<circle cx="10.5" cy="10.5" r="6.8"/><path d="m20.5 20.5-5-5"/>',
+ plusq:'<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M12 8v8M8 12h8"/>',
+ reel:'<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M3.5 8.6h17M9.3 3.6l2.8 5M14.6 3.6l2.8 5"/><path d="M10.3 12.3v5l4.3-2.5z" fill="currentColor"/>',
+ heart:'<path d="M12 20.3s-7.8-4.6-9-9.6C2.2 7.3 4.4 4.5 7.5 4.5c2 0 3.4 1.1 4.5 2.7 1.1-1.6 2.5-2.7 4.5-2.7 3.1 0 5.3 2.8 4.5 6.2-1.2 5-9 9.6-9 9.6z"/>',
+ comment:'<path d="M20.6 16.3A9 9 0 1 0 17 20.1l3.9 1-1.3-4.8z"/>',
+ send:'<path d="M21.5 3 10.2 13.4M21.5 3l-6.8 18-4.5-7.6L2.5 9.2z"/>',
+ save:'<path d="M18.5 20.5 12 15l-6.5 5.5V4.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1z"/>',
+ more:'<path d="M5.5 12h.01M12 12h.01M18.5 12h.01" stroke-width="3"/>',
+ morev:'<path d="M12 5.5v.01M12 12v.01M12 18.5v.01" stroke-width="3"/>',
+ chev:'<path d="m6.5 9.5 5.5 5.5 5.5-5.5"/>',
+ back:'<path d="M15 5 8 12l7 7"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ grid:'<path d="M3.5 3.5h17v17h-17zM9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/>',
+ tagp:'<path d="M4 4h16v13h-5.2L12 20l-2.8-3H4z"/><circle cx="12" cy="9.3" r="2.5"/><path d="M7.8 15c.8-1.6 2.3-2.5 4.2-2.5s3.4.9 4.2 2.5"/>',
+ stack:'<path d="M8 3.5h12.5V16" /><rect x="3.5" y="8" width="12.5" height="12.5" rx="1.5" fill="currentColor"/>',
+ play:'<path d="M7 4.5v15l12-7.5z" fill="currentColor"/>',
+ playo:'<path d="M7 4.8v14.4L18.6 12z"/>',
+ music:'<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+ camera:'<path d="M3.5 8h4l1.8-2.7h5.4L16.5 8h4v11.5h-17z"/><circle cx="12" cy="13.3" r="3.6"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.3 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.3-3.5-8.5s1.1-6.1 3.5-8.5z"/>',
+ thumb:'<path d="M7.5 10.5v9.5h-3v-9.5zM7.5 10.5 11 3.6c1.5 0 2.6 1.2 2.3 2.7L12.7 9.5h6.1a2 2 0 0 1 2 2.4l-1.3 6.5a2 2 0 0 1-2 1.6H7.5"/>',
+ repost:'<path d="M17 3.5 20 6.5l-3 3M4 11.5V9.5a3 3 0 0 1 3-3h13M7 20.5l-3-3 3-3M20 12.5v2a3 3 0 0 1-3 3H4"/>',
+ bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .8 3.3 2.6 3.5 5.2"/>',
+ brief:'<rect x="3.5" y="7.5" width="17" height="12" rx="1.5"/><path d="M8.5 7.5V5h7v2.5M3.5 12.5h17"/>',
+ msg:'<path d="M4 5h16v11H9.5L4 20z"/>',
+ share:'<path d="M14 5l7 7-7 7v-4c-5 0-8.2 1.4-10.5 5 .6-5.6 3.6-10 10.5-10.5z"/>',
+ inbox:'<path d="M3.5 13.5 6 5h12l2.5 8.5V19a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5zM3.5 13.5H9l1 2.5h4l1-2.5h5.5"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 20.5c.8-4 4-6 8-6s7.2 2 8 6"/>',
+ link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+ pause:'<path d="M8 5v14M16 5v14" stroke-width="3"/>',
+ mute:'<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5"/>',
+ vol:'<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/>',
+ image:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="m4 18 5-5 4 4 2.5-2.5L20 19"/>',
+ text:'<path d="M5 6h14M5 11h14M5 16h9"/>',
+ story:'<circle cx="12" cy="12" r="8.5" stroke-dasharray="3 2.4"/><path d="M12 8v8M8 12h8"/>',
+ video:'<rect x="3.5" y="5.5" width="13" height="13" rx="2"/><path d="m16.5 10 4-2.5v9l-4-2.5"/>',
+ lock:'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ bars:'<path d="M5 18v-3M10 18v-6M15 18V9M20 18V6"/>',
+ doc:'<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 15.5h6"/>',
+ cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>'
+};
+const I=(n,s=24,w=1.8,extra="")=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${P[n]||""}</svg>`;
+const IF=(n,s=24,color="currentColor")=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="${color}" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+const VERIF=(s=14)=>`<svg class="verif" viewBox="0 0 24 24" width="${s}" height="${s}" aria-label="verificado"><path fill="#0095f6" d="M12 1.5l2.6 1.9 3.2-.1 1 3 2.6 1.9-1 3 1 3-2.6 1.9-1 3-3.2-.1L12 22.5l-2.6-1.9-3.2.1-1-3-2.6-1.9 1-3-1-3 2.6-1.9 1-3 3.2.1z"/><path d="m8 12.2 2.7 2.7L16.2 9.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SB=(ov)=>`<div class="sb${ov?" ov":""}"><span>9:41</span><span class="sbi"><svg width="18" height="11" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg><svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2c2.3 0 4.4.9 5.9 2.4l1.3-1.3A10.1 10.1 0 0 0 8 .4 10.1 10.1 0 0 0 .8 3.3l1.3 1.3A8.3 8.3 0 0 1 8 2.2zm0 3.5c1.3 0 2.5.5 3.4 1.4l1.3-1.3A6.6 6.6 0 0 0 8 3.9a6.6 6.6 0 0 0-4.7 1.9l1.3 1.3A4.8 4.8 0 0 1 8 5.7zm0 3.4 1.9-1.9a2.7 2.7 0 0 0-3.8 0z"/></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="1.8" fill="currentColor"/><rect x="23.5" y="4" width="1.8" height="4" rx="1" fill="currentColor" opacity=".4"/></svg></span></div>`;
+
+/* ---------- constantes ---------- */
+const NETS={
+ ig:{n:"Instagram",views:[["perfil","Perfil"],["feed","Feed"],["stories","Stories"],["reels","Reels"]],acc:["foto","carrossel","reel","story"],lim:2200},
+ li:{n:"LinkedIn",views:[["feed","Feed"]],acc:["foto","carrossel","reel","texto","artigo","enquete","link","evento"],lim:3000},
+ tt:{n:"TikTok",views:[["fyp","Para você"],["perfil","Perfil"]],acc:["reel","carrossel","foto"],lim:4000},
+ fb:{n:"Facebook",views:[["feed","Feed"],["stories","Stories"]],acc:["foto","carrossel","reel","texto","story","link"],lim:63206}};
+const FMT={foto:["Foto","image"],carrossel:["Carrossel","stack"],reel:["Reel / vídeo","reel"],story:["Story","story"],texto:["Só texto","text"],artigo:["Artigo","doc"],enquete:["Enquete","bars"],link:["Link","link"],evento:["Evento","cal"]};
+const LIONLY=["artigo","enquete","evento"];const CARDF=["artigo","link","evento"];;
+const STAT=[["ideia","Ideia",""],["rascunho","Rascunho",""],["aprovacao","Em aprovação","warn"],["aprovado","Aprovado","info"],["agendado","Agendado","brand"],["publicado","Publicado","ok"]];
+const STN=Object.fromEntries(STAT.map(s=>[s[0],s]));
+const PROP=[["4:5","4:5 (retrato)"],["1:1","1:1 (quadrado)"],["1.91:1","1,91:1 (paisagem)"],["orig","Original"]];
+
+/* ---------- estado ---------- */
+let db=null,assets=null,canWrite=true,localMode=false;
+let perfis=[],posts=[],shares=[];
+let cur=ls.get("sim-pf")||"",net=ls.get("sim-net")||"ig";
+const view={ig:"feed",li:"feed",tt:"fyp",fb:"feed"};try{Object.assign(view,JSON.parse(ls.get("sim-view")||"{}"))}catch(_){}
+let edit=null; // {kind:"post"|"perfil", d:{...}, id, isNew}
+let filt=ls.get("sim-filt")||"";if(filt.startsWith("rede:"))filt="";
+let opt={dark:ls.get("sim-dark")==="1",safe:false,visit:false,plan:true,nums:false,muted:true};
+const expanded=new Set();
+let focusId=null,uploading=0;
+const localBlobs={};
+
+/* ---------- utilidades ---------- */
+const media=m=>m?(m.a?"/_blob/"+m.a:(m.src||localBlobs[m.k]||"")):"";
+function hash(s){let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return((h>>>0)%10000)/10000}
+const nm=v=>opt.nums?fmtN(v):"";
+function fmtN(n){n=Math.round(+n||0);if(n<10000)return n.toLocaleString("pt-BR");if(n<1e6){const v=(n/1000);return(v<100?v.toFixed(1):Math.round(v).toString()).replace(".",",").replace(",0","")+" mil"}const v=n/1e6;return v.toFixed(1).replace(".",",").replace(",0","")+" mi"}
+function pf(){return perfis.find(p=>p.id===cur)||perfis[0]||{id:"",nome:"Seu perfil",usuario:"seu.perfil",seguidores:1200,seguindo:300}}
+function inits(n){return(n||"?").replace(/[{}@]/g,"").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"?"}
+function AV(p,size,ring){const im=p&&p.foto?`<img src="${esc(media({a:p.foto,k:p.fotoK}))}" alt="">`:`<span style="font-size:${Math.round(size*.36)}px">${esc(inits(p&&p.nome))}</span>`;
+  const a=`<div class="av" style="width:${size}px;height:${size}px">${im}</div>`;return ring?`<div class="ring${ring==="seen"?" seen":""}">${a}</div>`:a}
+function met(p){const prof=perfis.find(x=>x.id===p.perfil)||pf();const base=+prof.seguidores||1000,r=hash(p.id||"x"),m=p.metricas||{};
+  const cur=v=>v===""||v===undefined||v===null?null:+v;
+  return{curt:cur(m.curtidas)??Math.round(base*(.02+r*.05))+3,com:cur(m.comentarios)??Math.round(base*(.002+r*.006))+1,comp:cur(m.compart)??Math.round(base*(.001+r*.004)),
+    views:cur(m.views)??Math.round(base*(.6+r*2.4))+40,saves:Math.round(base*(.003+r*.01))}}
+function rel(d,style){if(!d)return style==="li"?"Agora":"Agora";const t=new Date(d.length<=10?d+"T09:00":d),now=Date.now(),s=(now-t)/1000;
+  if(isNaN(s)||s<60)return style==="ig"?"Agora mesmo":"Agora";const m=s/60,h=m/60,dd=h/24;
+  if(style==="ig"){if(m<60)return`há ${Math.floor(m)} minutos`;if(h<24)return`há ${Math.floor(h)} hora${Math.floor(h)>1?"s":""}`;if(dd<7)return`há ${Math.floor(dd)} dia${Math.floor(dd)>1?"s":""}`;return t.toLocaleDateString("pt-BR",{day:"numeric",month:"long"})}
+  if(m<60)return Math.floor(m)+" min";if(h<24)return Math.floor(h)+" h";if(dd<7)return Math.floor(dd)+" d";if(dd<30)return Math.floor(dd/7)+" sem";return t.toLocaleDateString("pt-BR",{day:"numeric",month:"short"}).replace(".","")}
+function capHTML(t){return esc(t).replace(/(^|[\s(])([#@][\p{L}\p{N}_.]*[\p{L}\p{N}_])/gu,'$1<span class="tag">$2</span>')}
+function cut(t,maxC,maxL){t=(t||"").replace(/\s+$/,"");const L=t.split("\n");let out=L.slice(0,maxL).join("\n");let did=L.length>maxL;if(out.length>maxC){out=out.slice(0,maxC).replace(/\s+\S*$/,"");did=true}return{s:out,cut:did&&out.length<t.length}}
+function ratio(p,net){const m=(p.midias||[])[0];const nat=m&&m.w&&m.h?m.w/m.h:.8;const pr=p.proporcao||"4:5";
+  let r=pr==="1:1"?1:pr==="1.91:1"?1.91:pr==="orig"?nat:.8;
+  if(net==="ig"){if(p.formato==="reel")return .8;return Math.min(1.91,Math.max(.8,r))}
+  if(net==="li"||net==="fb"){if(p.formato==="reel")return Math.max(.8,Math.min(1.78,nat));return Math.min(1.91,Math.max(.75,pr==="orig"?nat:r))}
+  return r}
+function mEl(m,cls,extra){const u=media(m);if(!u)return`<div class="nomedia">${m&&m.k?"Mídia só nesta sessão":"Sem mídia"}</div>`;
+  return m.t==="video"?`<video src="${esc(u)}#t=0.1" muted playsinline loop preload="metadata" ${extra||""} class="${cls||""}"></video>`:`<img src="${esc(u)}" alt="" loading="lazy" class="${cls||""}" ${extra||""}>`}
+function vis(p){if(!opt.plan&&p.status!=="publicado")return false;return true}
+function ord(a,b){return(a.ordem??0)-(b.ordem??0)||String(b.data||"").localeCompare(String(a.data||""))}
+function allPosts(){let l=posts;if(edit&&edit.kind==="post"){const d={...edit.d,id:edit.id};l=edit.isNew?[d,...posts]:posts.map(p=>p.id===edit.id?d:p)}return l}
+function postsFor(n,fmts,perfilId){const pid=perfilId||cur;return allPosts().filter(p=>p.perfil===pid&&(p.redes||[]).includes(n)&&(fmts||NETS[n].acc).includes(p.formato)&&vis(p)).sort(ord)}
+function pfOf(p){return perfis.find(x=>x.id===p.perfil)||pf()}
+function liveProfile(){if(edit&&edit.kind==="perfil")return{...pf(),...edit.d};return pf()}
+const statMark=p=>opt.plan&&p.status!=="publicado"?`<span class="statmark">${esc((STN[p.status]||["","Rascunho"])[1])}${p.data?" · "+esc(fmtShort(p.data)):""}</span>`:"";
+function fmtShort(d){const t=new Date(d.length<=10?d+"T12:00":d);return isNaN(t)?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+(d.length>10?" "+d.slice(11,16):"")}
+
+/* ---------- renderização: cabeçalho e lado ---------- */
+function renderTop(){
+  $("#nets").innerHTML=Object.entries(NETS).map(([k,v])=>`<button role="tab" type="button" data-net="${k}" aria-selected="${k===net}">${v.n}</button>`).join("");
+  $("#pfSel").innerHTML=perfis.length?perfis.map(p=>`<option value="${esc(p.id)}"${p.id===cur?" selected":""}>${esc(p.nome||p.usuario)}</option>`).join(""):`<option>Sem perfil</option>`;
+  $("#newPost").disabled=!canWrite||!perfis.length;$("#newPf").disabled=!canWrite;
+}
+const FILTROS=[["todos","Todos os posts"],["aprov","Só Em aprovação, Aprovado, Agendado e Publicado"],["emaprov","Só Em aprovação"]];
+function shareOf(id){return shares.find(x=>x.id===id)}
+function dtBR(iso){if(!iso)return"";const t=new Date(iso);return isNaN(t)?"":t.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+t.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function shareLine(p){const sh=shareOf(p.id);if(!sh)return"";
+  const st=shareState(sh);
+  return`<div class="rsub" style="margin-top:4px">${sh.previaUrl?`<a href="${esc(sh.previaUrl)}" target="_blank" rel="noopener" style="color:var(--brand-text);font-weight:700">Link do cliente</a>`:"Link do cliente"} · ${(sh.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")} · ${st==="gerando"?`<span class="pill warn">Gerando…</span>`:st==="erro"?`<span class="pill bad">Erro</span>`:st==="manual"?`<span class="pill warn">Pedido manual</span>`:`atualizado ${esc(dtBR(sh.atualizadoEm))}`}</div>`}
+function sharePhrase(p,sh){return`Gera o link da prévia do cliente "${p.nome||p.usuario}" no simulador {ger} (perfil ${p.id}).`}
+function openShare(){const p=pf();const sh=shareOf(p.id);
+  const used=[...new Set(posts.filter(x=>x.perfil===p.id).flatMap(x=>x.redes||[]))];
+  edit={kind:"share",id:p.id,isNew:!sh,d:sh?JSON.parse(JSON.stringify(sh)):{redes:used.length?used:["ig"],filtro:"aprov",cliente:""},done:false};delete edit.d.id;renderAll();toSide()}
+function shareCount(d,pid){return posts.filter(x=>x.perfil===pid&&(x.redes||[]).some(r=>(d.redes||[]).includes(r)&&NETS[r].acc.includes(x.formato))&&passFiltro(x,d.filtro)).length}
+function passFiltro(x,f){return f==="emaprov"?x.status==="aprovacao":f==="aprov"?["aprovacao","aprovado","agendado","publicado"].includes(x.status):true}
+const TRIG_ID="__TRIG__";const PREVIA_BASE="https://gervmkt.github.io/previas/";
+function slugify(t){return(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)}
+function shareState(sh){if(!sh)return"novo";if(sh.status==="erro"&&(!sh.atualizadoEm||sh.erroEm>=sh.pedidoEm))return"erro";if(sh.pedidoEm&&(!sh.atualizadoEm||sh.pedidoEm>sh.atualizadoEm))return sh.status==="manual"?"manual":"gerando";return"pronto"}
+function linkMsg(sh,p){return`Oi! Aqui está a prévia dos posts da ${p.nome||""} para você ver como vão ficar nas redes: ${sh.previaUrl}`}
+function renderShare(){const d=edit.d,p=pf(),sh=shareOf(p.id),n=shareCount(d,p.id),st=shareState(sh);
+  const url=PREVIA_BASE+(d.slug||slugify(p.nome))+"/";
+  $("#side").innerHTML=`<div class="panel"><form id="shf" class="fields" autocomplete="off" onsubmit="return false">
+   <div class="full" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">Compartilhar ${esc(p.nome||"")}</h2><button class="btn sm" type="button" data-act="cancel">Fechar</button></div>
+   <p class="full sub" style="margin:0">Gera uma página que abre direto no navegador, sem login, só com este perfil e as redes escolhidas.</p>
+   <div class="full"><h3 style="margin-bottom:6px">Redes que o cliente vai ver</h3><div class="chips">${Object.entries(NETS).map(([k,v])=>`<button class="chip" type="button" data-shr="${k}" aria-pressed="${(d.redes||[]).includes(k)}">${v.n}</button>`).join("")}</div></div>
+   <label class="full">Quais posts entram<select name="filtro">${FILTROS.map(([k,v])=>`<option value="${k}"${d.filtro===k?" selected":""}>${v}</option>`).join("")}</select></label>
+   <label class="full">Final do endereço<input name="slug" value="${esc(d.slug||slugify(p.nome))}" placeholder="cardoso"${sh&&sh.previaUrl?" readonly":""}><span class="help">${sh&&sh.previaUrl?"O endereço não muda depois de criado, para o link do cliente continuar valendo.":`O link vai ficar: <b>${esc(url)}</b>`}</span></label>
+   <label class="full">Para quem (só para você se lembrar)<input name="cliente" value="${esc(d.cliente)}" placeholder="Ex.: Ana, da Cardoso"></label>
+   <div class="full notice" style="margin:0">${n} post${n===1?"":"s"} vão para a prévia com essa escolha.</div>
+   ${st==="gerando"?`<div class="full notice" style="margin:0;background:var(--brand-soft)"><b>Gerando o link…</b> Costuma levar de 3 a 6 minutos. Pode fechar este painel; o link aparece aqui e no cartão do perfil quando ficar pronto.</div>`:""}
+   ${st==="erro"?`<div class="full warn">Não deu para gerar o link: ${esc(sh.erro||"erro desconhecido")}. Tente de novo ou peça ao Claude na conversa.</div>`:""}
+   ${st==="manual"||edit.manual?`<div class="full" style="display:flex;flex-direction:column;gap:8px"><b>${TRIG_ID.startsWith("__")?"Para gerar o link, cole esta frase na conversa com o Claude:":"O botão automático não respondeu. Cole esta frase na conversa com o Claude:"}</b><div class="preview-cut" id="phrase" style="user-select:all">${esc(sharePhrase(p,d))}</div><div class="acts"><button class="btn sm" type="button" data-act="copyphrase">Copiar frase</button></div></div>`:""}
+   ${sh&&sh.previaUrl&&st!=="gerando"?`<div class="full" style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px"><b>Link do cliente${sh.atualizadoEm?` · atualizado ${esc(dtBR(sh.atualizadoEm))}`:""}</b><div class="preview-cut" id="plink" style="user-select:all">${esc(sh.previaUrl)}</div>
+     <div class="acts"><button class="btn primary sm" type="button" data-act="copylink">Copiar link</button><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(linkMsg(sh,p))}" target="_blank" rel="noopener">Enviar no WhatsApp</a><a class="btn sm" href="${esc(sh.previaUrl)}" target="_blank" rel="noopener">Abrir</a></div>
+     <span class="help">Depois de mudar posts, clique em "Atualizar link". O endereço continua o mesmo; o cliente só precisa recarregar a página.</span></div>`:""}
+   <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="saveshare"${canWrite&&(d.redes||[]).length&&st!=="gerando"?"":" disabled"}>${sh&&sh.previaUrl?"Atualizar link":"Gerar link para o cliente"}</button>${sh?`<button class="btn danger" type="button" data-act="delshare">Parar de compartilhar</button>`:""}</div>
+   ${sh?`<p class="full help" style="margin:0">"Parar de compartilhar" apaga o pedido daqui. Para tirar a página do ar, peça ao Claude: "apaga a prévia de ${esc(p.nome||"")}".</p>`:""}
+  </form></div>`}
+async function saveShare(){readShare();const p=pf(),d=edit.d,sh=shareOf(p.id);
+  d.slug=slugify(d.slug||p.nome);if(!d.slug)return toast("Escolha o final do endereço.");
+  if(shares.some(x=>x.id!==p.id&&x.slug===d.slug))return toast("Esse endereço já é de outro perfil. Escolha outro final.");
+  const body={...(sh||{}),...d,perfil:p.id,perfilNome:p.nome||"",pedidoEm:new Date().toISOString(),status:"gerando",erro:""};delete body.id;
+  try{await put("compartilhamentos",p.id,body)}catch(err){return failWrite(err)}
+  edit.manual=false;
+  let ok=false;try{const mcp=await claude.use("mcp");if(mcp&&!TRIG_ID.startsWith("__")){await mcp.callTool("Claude Code Remote","fire_trigger",{trigger_id:TRIG_ID,text:"perfil="+p.id});ok=true}}catch(e){console.warn("fire_trigger",e&&e.code)}
+  if(!ok){edit.manual=true;try{await upd("compartilhamentos",p.id,{status:"manual"})}catch(_){}}
+  toast(ok?"Gerando o link…":"Pedido salvo");renderSide()}
+
+function readShare(){const f=$("#shf");if(!f)return;edit.d.filtro=f.filtro.value;edit.d.cliente=f.cliente.value;if(!f.slug.readOnly)edit.d.slug=f.slug.value}
+function renderSide(){
+  if(edit)return edit.kind==="post"?renderPostEditor():edit.kind==="share"?renderShare():renderPerfilEditor();
+  const p=pf();
+  if(!perfis.length){$("#side").innerHTML=`<div class="panel"><h2>Comece pelo perfil</h2><p class="sub">Cadastre o perfil que vai aparecer na prévia: nome, @, foto, bio e número de seguidores. Pode ser a {ger} ou um cliente; dá para ter quantos quiser e alternar no topo.</p><button class="btn primary" type="button" data-act="newpf"${canWrite?"":" disabled"}>Criar perfil</button></div>`;return}
+  const mine=posts.filter(x=>x.perfil===p.id).sort(ord);
+  const l=mine.filter(x=>!filt||x.status===filt||(filt==="rede:"+net&&(x.redes||[]).includes(net)));
+  const cnt=k=>mine.filter(x=>x.status===k).length;
+  $("#side").innerHTML=`<div class="panel"><div class="pcard">${AV(p,56)}<div style="flex:1;min-width:0"><div class="nm">${esc(p.nome||"")}${p.verificado?VERIF(15):""}</div><div class="rsub">@${esc(p.usuario||"")} · ${fmtN(p.seguidores)} seguidores</div>${p.headline?`<div class="rsub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.headline)}</div>`:""}${shareLine(p)}</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:6px"><button class="btn sm primary" type="button" data-act="share"${canWrite?"":" disabled"}>Compartilhar</button><button class="btn sm" type="button" data-act="editpf"${canWrite?"":" disabled"}>Editar perfil</button></div></div></div>
+  <div class="panel">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"><h2 style="flex:1">Posts</h2><button class="btn primary sm" type="button" data-act="newpost"${canWrite?"":" disabled"}>Novo post</button></div>
+    <div class="chips" style="margin-bottom:10px"><button class="chip" type="button" data-filt="" aria-pressed="${!filt}">Todos ${mine.length}</button>${STAT.filter(s=>cnt(s[0])).map(s=>`<button class="chip" type="button" data-filt="${s[0]}" aria-pressed="${filt===s[0]}">${s[1]} ${cnt(s[0])}</button>`).join("")}</div>
+    <div class="plist">${l.length?l.map(rowHTML).join(""):`<div class="empty">${mine.length?"Nada com esse filtro.":"Nenhum post ainda. Clique em \"Novo post\", suba as imagens ou o vídeo e veja na hora como fica no feed."}</div>`}</div>
+    <p class="help" style="margin:10px 0 0">A ordem da lista é a ordem do perfil (o primeiro é o mais recente). Para reorganizar a grade, arraste os quadrados na tela Perfil do Instagram.</p>
+  </div>`;
+}
+function rowHTML(p){const m=(p.capa&&p.formato==="reel")?p.capa:(p.midias||[])[0];const s=STN[p.status]||STAT[1];
+  const t=p.formato==="artigo"&&p.artTitulo||p.formato==="enquete"&&p.pergunta||p.formato==="evento"&&p.evNome||(p.formato==="artigo"?p.chamada:"")||(p.legenda||"").split("\n")[0]||(p.formato==="link"&&p.linkTitulo)||"(sem legenda)";
+  return`<div class="prow${focusId===p.id?" sel":""}" data-edit="${esc(p.id)}" tabindex="0" role="button"><div class="thumb">${m?mEl(m):I(FMT[p.formato]?.[1]||"image",22)}${p.formato==="carrossel"?`<span class="badge">${I("stack",14)}</span>`:p.formato==="reel"?`<span class="badge">${IF("play",12,"#fff")}</span>`:""}</div>
+  <div style="flex:1;min-width:0"><div class="rname">${esc(t)}</div><div class="rsub">${esc(FMT[p.formato]?.[0]||"")} · ${(p.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")||"sem rede"}${p.data?" · "+esc(fmtShort(p.data)):""}</div></div><span class="pill ${s[2]}">${s[1]}</span></div>`}
+
+/* ---------- editor de post ---------- */
+function newPost(){const mn=Math.min(0,...posts.filter(p=>p.perfil===cur).map(p=>p.ordem??0));
+  const fm=net==="li"?"foto":net==="tt"?"reel":(view.ig==="stories"&&net==="ig")?"story":(view.ig==="reels"&&net==="ig")?"reel":"foto";
+  edit={kind:"post",isNew:true,id:newId("posts"),d:{perfil:cur,redes:[net],formato:fm,midias:[],capa:null,proporcao:"4:5",legenda:"",comentario:"",link:"",docTitulo:"",data:"",status:"rascunho",foco:50,ordem:mn-1,metricas:{},notas:""}};
+  focusId=edit.id;autoView(edit.d);renderAll();toSide()}
+function openPost(id){const p=posts.find(x=>x.id===id);if(!p)return;edit={kind:"post",isNew:false,id,d:JSON.parse(JSON.stringify(p))};delete edit.d.id;edit.d.metricas=edit.d.metricas||{};focusId=id;
+  if(!(p.redes||[]).includes(net))net=(p.redes||[])[0]||net;autoView(edit.d);renderAll();toSide()}
+function autoView(d){if(net==="ig"){if(d.formato==="story")view.ig="stories";else if(d.formato==="reel"&&view.ig==="stories")view.ig="reels";else if(view.ig==="stories"||(view.ig==="reels"&&d.formato!=="reel"))view.ig="feed"}
+  if(net==="fb"){view.fb=d.formato==="story"?"stories":"feed"}
+  if(net==="tt"&&view.tt==="perfil")view.tt="fyp"}
+function renderPostEditor(){const d=edit.d,ok=canWrite;
+  const fmts=Object.entries(FMT).map(([k,v])=>`<button class="chip" type="button" data-fmt="${k}" aria-pressed="${d.formato===k}" title="${LIONLY.includes(k)?"Só LinkedIn":k==="link"?"LinkedIn e Facebook":""}">${v[0]}${LIONLY.includes(k)?` <span style="opacity:.6;font-weight:500">· LinkedIn</span>`:""}</button>`).join("");
+  const reds=Object.entries(NETS).map(([k,v])=>`<button class="chip" type="button" data-rede="${k}" aria-pressed="${(d.redes||[]).includes(k)}">${v.n}</button>`).join("");
+  const many=d.formato==="carrossel",isV=d.formato==="reel",isS=d.formato==="story",isT=d.formato==="texto"||d.formato==="enquete",isC=CARDF.includes(d.formato),F=d.formato;
+  $("#side").innerHTML=`<div class="panel"><form id="pf" class="fields" autocomplete="off" onsubmit="return false">
+   <div class="full" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">${edit.isNew?"Novo post":"Editar post"}</h2><button class="btn sm mobonly" type="button" data-act="toprev">Ver prévia</button><button class="btn sm" type="button" data-act="cancel">Fechar</button></div>
+   <div class="full"><h3 style="margin-bottom:6px">Formato</h3><div class="chips">${fmts}</div></div>
+   <div class="full"><h3 style="margin-bottom:6px">Redes</h3><div class="chips">${reds}</div></div>
+   ${isT?"":`<div class="sec">${isV?"Vídeo":isC?"Imagem de capa":"Mídia"}</div>
+   <div class="full">${assets||localMode?`<div class="drop" id="drop" tabindex="0" role="button">${I("image",22,1.8,'style="margin:0 auto 6px"')}${many?"Arraste as imagens do carrossel ou clique para escolher (até 20)":isC?(F==="evento"?"Capa do evento (ideal 1776 × 444, formato 4:1)":F==="artigo"?"Capa do artigo (ideal 1920 × 1080)":"Imagem da prévia do link (ideal 1200 × 627). Opcional"):isV?"Arraste o vídeo (MP4, até 20 MB) ou clique para escolher":"Arraste a imagem ou o vídeo, ou clique para escolher"}<div class="help" style="margin-top:4px">JPG, PNG, WebP, GIF, MP4 ou WebM. Imagens grandes são reduzidas para 2160 px.</div></div>`:`<div class="warn">Só quem pode editar este simulador consegue enviar mídia.</div>`}</div>
+   <div class="full mgrid" id="mgrid">${mediaGrid(d)}</div>
+   ${isV?`<label class="full">Capa do reel (aparece na grade)<span class="help">Opcional. Sem capa, a grade usa o primeiro quadro do vídeo.</span><span class="acts">${d.capa?`<span class="thumb">${mEl(d.capa)}</span><button class="btn sm" type="button" data-act="capa-x">Tirar capa</button>`:""}<button class="btn sm" type="button" data-act="capa"${assets||localMode?"":" disabled"}>${d.capa?"Trocar capa":"Escolher capa"}</button></span></label>`:""}
+   ${!isS&&!isV&&!isC?`<label>Proporção no feed<select name="proporcao">${PROP.map(([k,n])=>`<option value="${k}"${d.proporcao===k?" selected":""}>${n}</option>`).join("")}</select></label>`:""}
+   ${!isS&&!isC?`<label>Recorte na grade<input type="range" name="foco" min="0" max="100" value="${+d.foco||50}"><span class="help">Move a imagem para cima ou para baixo no quadrado 3:4 do perfil.</span></label>`:""}`}
+   ${F==="artigo"?`<div class="sec">Artigo</div>
+   <label class="full">Título do artigo<input name="artTitulo" maxlength="150" value="${esc(d.artTitulo)}" placeholder="Ex.: O que muda para empresas do porto com a nova norma"></label>
+   <label class="full">Newsletter (opcional)<input name="newsletter" value="${esc(d.newsletter)}" placeholder="Nome da newsletter, se o artigo sair por uma"><span class="help">Com newsletter, o card mostra o nome dela e o botão de inscrição.</span></label>
+   <label class="full">Texto que acompanha o artigo no feed<textarea name="chamada" style="min-height:70px" placeholder="O comentário que aparece acima do card">${esc(d.chamada)}</textarea></label>`:""}
+   ${F==="enquete"?`<div class="sec">Enquete</div>
+   <label class="full">Pergunta<input name="pergunta" maxlength="140" value="${esc(d.pergunta)}" placeholder="Até 140 caracteres"></label>
+   ${[0,1,2,3].map(i=>`<label>Opção ${i+1}${i>1?" (opcional)":""}<input name="op${i}" maxlength="30" value="${esc((d.opcoes||[])[i]||"")}" placeholder="Até 30 caracteres"></label>`).join("")}
+   <label>Duração<select name="duracao">${[["1","1 dia"],["3","3 dias"],["7","1 semana"],["14","2 semanas"]].map(([k,n])=>`<option value="${k}"${(d.duracao||"7")===k?" selected":""}>${n}</option>`).join("")}</select></label>`:""}
+   ${F==="link"?`<div class="sec">Link</div>
+   <label class="full">Endereço<input name="url" value="${esc(d.url)}" placeholder="https://seusite.com.br/artigo"></label>
+   <label class="full">Título da prévia<input name="linkTitulo" value="${esc(d.linkTitulo)}" placeholder="O título da página, como aparece no card"></label>`:""}
+   ${F==="evento"?`<div class="sec">Evento</div>
+   <label class="full">Nome do evento<input name="evNome" maxlength="75" value="${esc(d.evNome)}" placeholder="Ex.: Live: marketing para advogados"></label>
+   <label>Data e hora do evento<input type="datetime-local" name="evData" value="${esc(d.evData)}"></label>
+   <label>Tipo<select name="evTipo">${["Online","Presencial"].map(k=>`<option${(d.evTipo||"Online")===k?" selected":""}>${k}</option>`).join("")}</select></label>
+   <label class="full">Local ou plataforma<input name="evLocal" value="${esc(d.evLocal)}" placeholder="LinkedIn Live, Zoom, endereço…"></label>`:""}
+   ${isS?`<label class="full">Figurinha de link (opcional)<input name="link" value="${esc(d.link)}" placeholder="seusite.com.br"></label>`:`<div class="sec">Texto</div>
+   <label class="full">${F==="artigo"?"Texto do artigo":F==="evento"?"Texto do post sobre o evento":"Legenda"}<textarea name="legenda" id="leg" placeholder="Escreva como vai sair. Quebras de linha, #hashtags e @menções aparecem como na rede.">${esc(d.legenda)}</textarea><span class="counters" id="counters"></span></label>
+   <div class="full" id="cutPrev"></div>
+   ${(d.redes||[]).includes("ig")?`<label class="full">Primeiro comentário (Instagram)<input name="comentario" value="${esc(d.comentario)}" placeholder="Hashtags ou complemento"></label>`:""}
+   ${many&&(d.redes||[]).includes("li")?`<label class="full">Título do documento (LinkedIn)<input name="docTitulo" value="${esc(d.docTitulo)}" placeholder="Ex.: 5 erros no LinkedIn de advogados"></label>`:""}`}
+   <div class="sec">Planejamento</div>
+   <label>Status<select name="status">${STAT.map(s=>`<option value="${s[0]}"${d.status===s[0]?" selected":""}>${s[1]}</option>`).join("")}</select></label>
+   <label>Data e hora<input type="datetime-local" name="data" value="${esc(d.data)}"></label>
+   <label class="full">Notas internas<input name="notas" value="${esc(d.notas)}" placeholder="Não aparece na prévia"></label>
+   <div class="full warns" id="warns"></div>
+   <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="save"${ok?"":" disabled"}>Salvar</button>${edit.isNew?"":`<button class="btn" type="button" data-act="dup"${ok?"":" disabled"}>Duplicar</button><button class="btn danger" type="button" data-act="del"${ok?"":" disabled"}>Excluir</button>`}<span class="sub" id="upMsg"></span></div>
+  </form></div>`;
+  updCounters();bindDrop();
+}
+function mediaGrid(d){const ms=d.midias||[];return ms.map((m,i)=>`<div class="mitem">${mEl(m)}<span class="n">${i+1}</span><div class="mb"><button type="button" data-mv="${i}:-1" aria-label="Mover para a esquerda"${i?"":" disabled"}>‹</button><button type="button" data-mx="${i}" aria-label="Remover">×</button><button type="button" data-mv="${i}:1" aria-label="Mover para a direita"${i<ms.length-1?"":" disabled"}>›</button></div></div>`).join("")+(uploading?`<div class="mitem up">Enviando ${uploading}…</div>`:"")}
+function updCounters(){if(!edit||edit.kind!=="post")return;const d=edit.d,t=d.legenda||"";
+  const c=$("#counters");if(c){const hs=(t.match(/#[\p{L}\p{N}_]+/gu)||[]).length;
+    c.innerHTML=(d.redes||[]).map(r=>`<span class="cnt${t.length>NETS[r].lim?" over":""}">${NETS[r].n} ${t.length.toLocaleString("pt-BR")}/${NETS[r].lim.toLocaleString("pt-BR")}</span>`).join("")+(hs?`<span class="cnt${hs>30?" over":""}">${hs} hashtag${hs>1?"s":""}${hs>30?" (máx. 30 no Instagram)":""}</span>`:"")}
+  const cp=$("#cutPrev");if(cp){const r=(d.redes||[]).includes("ig")?["Instagram",125,2]:(d.redes||[]).includes("li")?["LinkedIn",210,3]:null;
+    if(r&&t){const x=cut(t,r[1],r[2]);cp.innerHTML=`<span class="help">O que aparece antes do "mais" no ${r[0]}:</span><div class="preview-cut">${esc(x.s)}${x.cut?"<i>… mais</i>":""}</div>`}else cp.innerHTML=""}
+  const w=$("#warns");if(w)w.innerHTML=warns(d).map(x=>`<div class="warn">${esc(x)}</div>`).join("")}
+function warns(d){const W=[],ms=d.midias||[],R=d.redes||[];
+  R.forEach(r=>{if(!NETS[r].acc.includes(d.formato))W.push(`${NETS[r].n} não tem o formato "${FMT[d.formato][0]}". Ele não vai aparecer na prévia dessa rede.`)});
+  if(!R.length)W.push("Escolha pelo menos uma rede.");
+  if(d.formato==="carrossel"&&ms.length<2)W.push("Carrossel precisa de pelo menos 2 itens.");
+  if(d.formato==="carrossel"&&ms.length>20)W.push("O Instagram aceita até 20 itens no carrossel.");
+  if(d.formato==="reel"&&ms.length&&ms[0].t!=="video")W.push("Reel precisa de vídeo. Com imagem, a prévia mostra a imagem parada.");
+  if((d.formato==="foto"||d.formato==="story")&&ms.length>1)W.push("Esse formato usa só o primeiro item. Para vários, escolha Carrossel.");
+  if(d.formato==="story"&&ms[0]&&ms[0].w&&Math.abs(ms[0].w/ms[0].h-.5625)>.06)W.push("Story fica melhor em 9:16 (1080 × 1920). Esta mídia vai ser cortada nas bordas.");
+  if(d.formato==="reel"&&ms[0]&&ms[0].w&&Math.abs(ms[0].w/ms[0].h-.5625)>.06)W.push("Reel e TikTok pedem vídeo vertical 9:16. Este vai aparecer com corte ou faixas.");
+  if(!["texto","enquete","link"].includes(d.formato)&&!ms.length)W.push(d.formato==="artigo"?"Artigo sem capa: o card no feed fica só com o título.":d.formato==="evento"?"Evento sem capa: o LinkedIn usa um fundo padrão.":"Ainda sem mídia: a prévia mostra um espaço vazio.");
+  if(d.formato==="enquete"&&(d.opcoes||[]).filter(x=>x&&x.trim()).length<2)W.push("A enquete precisa de pelo menos 2 opções.");
+  if(d.formato==="artigo"&&!(d.artTitulo||"").trim())W.push("Dê um título ao artigo.");
+  if(d.formato==="link"&&!(d.url||"").trim())W.push("Coloque o endereço do link.");
+  return W}
+function bindDrop(){const dz=$("#drop");if(!dz)return;
+  dz.onclick=()=>{$("#fileIn").dataset.for="midias";$("#fileIn").click()};dz.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();dz.click()}};
+  dz.ondragover=e=>{e.preventDefault();dz.classList.add("over")};dz.ondragleave=()=>dz.classList.remove("over");
+  dz.ondrop=e=>{e.preventDefault();dz.classList.remove("over");addFiles([...e.dataTransfer.files],"midias")}}
+
+/* ---------- editor de perfil ---------- */
+function renderPerfilEditor(){const d=edit.d;
+  $("#side").innerHTML=`<div class="panel"><form id="pff" class="fields" autocomplete="off" onsubmit="return false">
+  <div class="full" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">${edit.isNew?"Novo perfil":"Editar perfil"}</h2><button class="btn sm" type="button" data-act="cancel">Fechar</button></div>
+  <div class="full pcard">${AV(d,64)}<div class="acts"><button class="btn sm" type="button" data-act="avatar"${assets||localMode?"":" disabled"}>${d.foto||d.fotoK?"Trocar foto":"Enviar foto"}</button>${d.foto||d.fotoK?`<button class="btn sm" type="button" data-act="avatar-x">Tirar</button>`:""}</div></div>
+  <label>Nome<input name="nome" value="${esc(d.nome)}" required placeholder="{ger} Consultoria"></label>
+  <label>Usuário (@)<input name="usuario" value="${esc(d.usuario)}" placeholder="seu.usuario"></label>
+  <label>Categoria (Instagram)<input name="categoria" value="${esc(d.categoria)}" placeholder="Consultoria de marketing"></label>
+  <label>Link na bio<input name="link" value="${esc(d.link)}" placeholder="seusite.com.br"></label>
+  <label class="full">Bio<textarea name="bio" style="min-height:90px" placeholder="Até 150 caracteres no Instagram">${esc(d.bio)}</textarea></label>
+  <label class="full">Título no LinkedIn<input name="headline" value="${esc(d.headline)}" placeholder="Consultor de marketing para profissionais liberais"></label>
+  <div class="sec">Números</div>
+  <label>Seguidores<input type="number" min="0" name="seguidores" value="${esc(d.seguidores??"")}"></label>
+  <label>Seguindo<input type="number" min="0" name="seguindo" value="${esc(d.seguindo??"")}"></label>
+  <label>Curtidas no TikTok<input type="number" min="0" name="curtidasTT" value="${esc(d.curtidasTT??"")}"></label>
+  <label>Posts a mais no perfil<input type="number" min="0" name="postsExtra" value="${esc(d.postsExtra??"")}"><span class="help">Somados aos posts daqui, para o contador ficar real.</span></label>
+  <label class="full ckrow"><input type="checkbox" name="verificado"${d.verificado?" checked":""}> Selo de verificado</label>
+  <div class="full sticky-acts acts"><button class="btn primary" type="button" data-act="savepf"${canWrite?"":" disabled"}>Salvar perfil</button>${!edit.isNew?`<button class="btn danger" type="button" data-act="delpf">Excluir perfil</button>`:""}</div>
+  <div class="full warn" id="pfDelConf" hidden>Excluir o perfil apaga também os ${posts.filter(p=>p.perfil===edit.id).length} posts dele. <button class="btn sm danger" type="button" data-act="delpf2" style="margin-left:6px">Excluir tudo</button></div>
+  </form></div>`}
+
+/* ---------- prévia ---------- */
+let scrollMem={};
+function renderViews(){const vs=NETS[net].views;
+  $("#views").innerHTML=vs.map(([k,n])=>`<button role="tab" type="button" data-view="${k}" aria-selected="${view[net]===k}">${n}</button>`).join("");
+  const full=isFull();
+  $("#toggles").innerHTML=`<button class="tg" type="button" data-tg="dark" aria-pressed="${opt.dark}">App escuro</button>${full?`<button class="tg" type="button" data-tg="safe" aria-pressed="${opt.safe}">Zonas seguras</button><button class="tg" type="button" data-tg="muted" aria-pressed="${!opt.muted}">Som</button>`:""}`}
+function isFull(){return(net==="ig"&&(view.ig==="stories"||view.ig==="reels"))||(net==="tt"&&view.tt==="fyp")||(net==="fb"&&view.fb==="stories")}
+function renderPhone(){
+  const scr=$("#scr");
+  scrollMem.top=scr.scrollTop;scr.querySelectorAll("[data-car]").forEach(c=>{const t=c.querySelector(".car-track");if(t)scrollMem["c:"+c.dataset.car]=t.scrollLeft});
+  const vf=scr.querySelector(".vfeed");if(vf)scrollMem.vf=vf.scrollTop;
+  const ph=$("#phone");ph.className="phone "+net+(opt.dark?" dark":"");
+  let h="";const v=view[net];
+  if(net==="ig")h=v==="perfil"?igProfile():v==="stories"?storiesView("ig"):v==="reels"?reelsView():igFeed();
+  else if(net==="li")h=liFeed();
+  else if(net==="tt")h=v==="perfil"?ttProfile():ttFeed();
+  else h=v==="stories"?storiesView("fb"):fbFeed();
+  scr.innerHTML=h;
+  /* a barra de navegação fica presa ao celular, fora da área que rola */
+  const oldNav=$("#pnav");if(oldNav)oldNav.remove();
+  const nv=scr.querySelector(".mbar.abs");if(nv){nv.id="pnav";nv.style.zIndex="35";ph.appendChild(nv)}
+  scr.scrollTop=scrollMem.top||0;
+  scr.querySelectorAll("[data-car]").forEach(c=>{const t=c.querySelector(".car-track"),k="c:"+c.dataset.car;if(t&&scrollMem[k]){t.scrollLeft=scrollMem[k];carUpd(t)}});
+  const vf2=scr.querySelector(".vfeed");if(vf2&&scrollMem.vf)vf2.scrollTop=scrollMem.vf;
+  if(focusId&&pendingFocus){pendingFocus=false;const el=scr.querySelector(`[data-pid="${CSS.escape(focusId)}"]`);if(el){if(vf2){vf2.scrollTop=el.offsetTop}else if(!el.closest(".igp-grid")){scr.scrollTop=Math.max(0,el.offsetTop-90)}}}
+  setupVideos();
+  if(isStoryView())startStory();else stopStory();
+}
+let pendingFocus=false;
+function carousel(p,key,items,ratioV,opts={}){const n=items.length;
+  if(n<=1)return`<div class="md" style="aspect-ratio:${ratioV}">${mEl(items[0])}${items[0]&&items[0].t==="video"?`<span class="vbadge">${I(opt.muted?"mute":"vol",16)}</span>`:""}</div>`;
+  return`<div class="md" style="aspect-ratio:${ratioV}"><div class="car" data-car="${esc(key)}" data-n="${n}"><div class="car-track">${items.map(m=>`<div class="slide">${mEl(m)}</div>`).join("")}</div>${opts.noCounter?"":`<span class="car-n">1/${n}</span>`}${carBtns()}</div></div>`}
+const carBtns=()=>`<button type="button" class="car-btn prev" data-car-go="-1" aria-label="Imagem anterior" hidden>${I("back",16,2.6)}</button><button type="button" class="car-btn next" data-car-go="1" aria-label="Próxima imagem">${I("back",16,2.6,'style="transform:scaleX(-1)"')}</button>`;
+function carUpd(t){const c=t.closest("[data-car]");if(!c)return;const n=+c.dataset.n,i=Math.round(t.scrollLeft/Math.max(1,t.clientWidth));
+  const cn=c.querySelector(".car-n");if(cn)cn.textContent=`${i+1}/${n}`;
+  const pv=c.querySelector(".car-btn.prev"),nx=c.querySelector(".car-btn.next");if(pv)pv.hidden=i<=0;if(nx)nx.hidden=i>=n-1;
+  const vi=c.closest(".vitem");if(vi)vi.querySelectorAll(".ttdots i").forEach((d,j)=>d.classList.toggle("on",j===i));
+  const art=c.closest("[data-pid]");if(art)art.querySelectorAll(".dots i").forEach((d,j)=>d.classList.toggle("on",j===i));
+  const ld=art&&art.querySelector(".li-doc .pg");if(ld)ld.textContent=`${i+1} / ${n}`}
+const dotsHTML=n=>n>1?`<span class="dots">${Array.from({length:Math.min(n,20)},(_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</span>`:"<span></span>";
+function capBlock(p,key,t,maxC,maxL,lead,moreTxt){const ex=expanded.has(key);const x=ex?{s:t,cut:false}:cut(t,maxC,maxL);
+  return`${lead||""}${capHTML(x.s)}${x.cut?`<button type="button" class="more" data-exp="${esc(key)}">${moreTxt||"… mais"}</button>`:""}`}
+
+/* Instagram */
+function igTopBar(){return`${SB()}<div class="ig-top"><span class="ig-word">Instagram ${I("chev",16,2)}</span>${I("heart",25)}${I("send",24)}</div>`}
+function igFeed(){const p=liveProfile(),l=postsFor("ig",["foto","carrossel","reel"]);const st=postsFor("ig",["story"]).length;
+  const others=perfis.filter(x=>x.id!==cur).slice(0,8);
+  let h=igTopBar()+`<div class="ig-tray"><div class="it" data-act="openstories">${AV(p,62,st?"on":null)}<span>Seu story</span></div>${others.map(o=>`<div class="it" data-pfgo="${esc(o.id)}">${AV(o,62,"on")}<span>${esc(o.usuario||o.nome)}</span></div>`).join("")}</div>`;
+  if(!l.length)h+=`<div class="p-empty"><b>Feed vazio</b>Os posts de foto, carrossel e reel marcados para o Instagram aparecem aqui.</div>`;
+  h+=l.map(x=>igPost(x,p)).join("");
+  return h+`<div style="height:60px"></div>`+igNav("home")}
+function igPost(x,p){const m=met(x),ms=x.midias||[],car=x.formato==="carrossel";const key="ig:"+x.id;
+  const items=x.formato==="foto"?ms.slice(0,1):ms;
+  return`<article class="ig-post${focusId===x.id&&edit?" pinned":""}" data-pid="${esc(x.id)}">
+   <div class="ig-h">${AV(p,32,postsFor("ig",["story"]).length?"on":null)}<div class="ig-u"><b>${esc(p.usuario)}</b>${p.verificado?VERIF(13):""}${x.formato==="reel"?`<small>${I("music",11,2,'style="display:inline;vertical-align:-1px"')} ${esc(p.usuario)} · Áudio original</small>`:""}</div>${I("more",22)}</div>
+   <div style="position:relative">${statMark(x)}${items.length?carousel(x,key,items,ratio(x,"ig")):`<div class="md" style="aspect-ratio:${ratio(x,"ig")}"><div class="nomedia">Sem mídia</div></div>`}</div>
+   ${car&&items.length>1?`<div class="ig-dots">${dotsHTML(items.length)}</div>`:""}<div class="ig-acts"><div class="l"><span>${I("heart",25)}${nm(m.curt)}</span><span>${I("comment",24)}${nm(m.com)}</span><span>${I("repost",24)}</span><span>${I("send",23)}</span></div><span class="r">${I("save",24)}</span></div>
+   <div class="ig-txt">${opt.nums?`<p><b>${nm(m.curt)} curtidas</b></p>`:""}${x.legenda?`<p>${capBlock(x,key,x.legenda,125,2,`<b>${esc(p.usuario)}</b> `,"… mais")}</p>`:""}
+   ${opt.nums?(m.com?`<div class="cm">Ver todos os ${nm(m.com)} comentários</div>`:""):`<div class="cm">Ver comentários</div>`}${x.comentario?`<p><b>${esc(p.usuario)}</b> ${capHTML(x.comentario)}</p>`:""}<time>${esc(rel(x.data,"ig"))}</time></div></article>`}
+function igNav(on,dk){return`<div class="mbar abs${dk?" dk":""}">${I("home",26,on==="home"?2.4:1.8)}${I("reel",26,on==="reels"?2.4:1.8)}${I("send",25)}${I("search",25)}<span data-view-go="perfil" style="cursor:pointer">${AV(liveProfile(),26)}</span></div>`}
+function igProfile(){const p=liveProfile(),grid=postsFor("ig",["foto","carrossel","reel"]),st=postsFor("ig",["story"]);
+  const nposts=grid.length+(+p.postsExtra||0);const own=!opt.visit;
+  return`${SB()}<div class="igp-top">${own?I("lock",16,2):I("back",24,2)}<span style="flex:1;display:flex;align-items:center;gap:4px">${esc(p.usuario||"")}${p.verificado?VERIF(16):""}${own?I("chev",16,2):""}</span>${own?I("plusq",25)+I("menu",25):I("bell",24)+I("more",24)}</div>
+  <div class="igp-head"><span data-act="openstories" style="cursor:pointer">${AV(p,86,st.length?"on":null)}</span><div class="igp-stats"><div><b>${fmtN(nposts)}</b>posts</div><div><b>${fmtN(p.seguidores)}</b>seguidores</div><div><b>${fmtN(p.seguindo)}</b>seguindo</div></div></div>
+  <div class="igp-bio"><b>${esc(p.nome||"")}</b>${p.categoria?`\n<span class="cat">${esc(p.categoria)}</span>`:""}${p.bio?"\n"+capHTML(p.bio):""}${p.link?`\n<a>${I("link",13,2,'style="display:inline;vertical-align:-2px"')} ${esc(p.link.replace(/^https?:\/\//,""))}</a>`:""}</div>
+  <div class="igp-btns">${own?`<span>Editar perfil</span><span>Compartilhar perfil</span>`:`<span class="blue">Seguir</span><span>Mensagem</span>`}</div>
+  <div class="igp-hl">${st.length?`<div class="h" data-act="openstories"><div class="hc">${st[0].midias&&st[0].midias[0]?`<div class="av" style="width:100%;height:100%">${mEl(st[0].midias[0])}</div>`:AV(p,56)}</div>Stories</div>`:""}${own?`<div class="h"><div class="hc">${I("plus",26,1.6)}</div>Novo</div>`:""}</div>
+  <div class="igp-tabs"><span class="on">${I("grid",22)}</span><span>${I("reel",23)}</span><span>${I("tagp",23)}</span></div>
+  <div class="igp-grid" id="igGrid">${grid.length?grid.map(tile).join(""):""}</div>
+  ${grid.length?"":`<div class="p-empty"><b>Grade vazia</b>Crie posts de foto, carrossel ou reel para o Instagram.</div>`}
+  <div style="height:70px"></div>${igNav("perfil")}`}
+function tile(x){const m=(x.formato==="reel"&&x.capa)?x.capa:(x.midias||[])[0];const pos=`object-position:50% ${+x.foco||50}%`;
+  const mm=met(x);
+  return`<div class="tile${focusId===x.id&&edit?" pinned":""}" data-pid="${esc(x.id)}" data-tile="${esc(x.id)}" draggable="${canWrite&&!edit?"true":"false"}">${m?(media(m)?(m.t==="video"?`<video src="${esc(media(m))}#t=0.1" muted playsinline preload="metadata" style="${pos}"></video>`:`<img src="${esc(media(m))}" alt="" style="${pos}" loading="lazy">`):`<div class="nm">Mídia só nesta sessão</div>`):`<div class="nm">Sem mídia</div>`}
+   ${x.formato==="carrossel"?`<span class="ti">${I("stack",18)}</span>`:x.formato==="reel"?`<span class="ti">${I("reel",18,2)}</span>`:""}${x.formato==="reel"&&opt.nums?`<span class="tv">${I("playo",13,2.2)}${fmtN(mm.views)}</span>`:""}${statMark(x)}</div>`}
+function reelsView(){const p=liveProfile(),l=postsFor("ig",["reel"]);
+  const items=l.length?l.map(x=>{const m=met(x),ms=x.midias||[];const key="igr:"+x.id;
+    return`<div class="vitem" data-pid="${esc(x.id)}"><div class="md">${mEl(ms[0])}</div><div class="shade"></div>${statMark(x)}
+     <div class="rail"><div>${I("heart",28)}${nm(m.curt)}</div><div>${I("comment",27)}${nm(m.com)}</div><div>${I("repost",27)}${nm(m.comp)}</div><div>${I("send",26)}${nm(m.comp)}</div><div>${I("more",24)}</div><div><span style="width:28px;height:28px;border-radius:7px;border:2px solid #fff;overflow:hidden;display:block">${AV(p,24)}</span></div></div>
+     <div class="vcap"><div class="who">${AV(p,32)}<span>${esc(p.usuario)}</span>${p.verificado?VERIF(13):""}<span class="fol">Seguir</span></div>${x.legenda?`<p>${capBlock(x,key,x.legenda,60,1,"","… mais")}</p>`:""}<div class="aud">${I("music",14,2)} ${esc(p.usuario)} · Áudio original</div></div>${szHTML("reel")}</div>`}).join(""):`<div class="vitem"><div class="st-empty">Nenhum reel ainda.<br>Crie um post no formato "Reel / vídeo" marcado para o Instagram.</div></div>`;
+  return`<div class="fsv">${SB(true)}<div class="vtop"><span>Reels ${I("chev",16,2,'style="display:inline"')}</span>${I("camera",26)}</div><div class="vfeed">${items}</div>${igNav("reels",true)}</div>`}
+function szHTML(kind){if(!opt.safe)return"";
+  if(kind==="story")return`<div class="sz"><div style="left:0;right:0;top:44px;height:13%">Topo: foto e nome</div><div style="left:0;right:0;bottom:70px;height:13%">Base: resposta e figurinhas</div></div>`;
+  if(kind==="reel")return`<div class="sz"><div style="left:0;right:0;top:44px;height:9%">Título</div><div style="right:0;bottom:56px;width:19%;height:52%">Botões</div><div style="left:0;right:19%;bottom:56px;height:24%">Legenda e áudio</div></div>`;
+  return`<div class="sz"><div style="left:0;right:0;top:44px;height:9%">Abas</div><div style="right:0;bottom:56px;width:20%;height:55%">Botões</div><div style="left:0;right:20%;bottom:56px;height:24%">Legenda e som</div></div>`}
+
+/* Stories (Instagram e Facebook) */
+let st={i:0,t0:0,paused:false,timer:null,key:"",list:[]};
+function isStoryView(){return(net==="ig"&&view.ig==="stories")||(net==="fb"&&view.fb==="stories")}
+function storiesView(n){const p=liveProfile(),l=postsFor(n,["story"]);const key=n+":"+l.map(x=>x.id).join(",");
+  if(key!==st.key){st.key=key;st.list=l;if(edit&&edit.kind==="post"&&edit.d.formato==="story"){const k=l.findIndex(x=>x.id===edit.id);st.i=k<0?0:k;st.paused=true}else{st.i=0;st.paused=false}st.t0=performance.now()}
+  st.list=l;if(st.i>=l.length)st.i=0;
+  if(!l.length)return`<div class="fsv">${SB(true)}<div class="st-empty">Nenhum story ainda.<br>Crie um post no formato "Story" marcado para o ${NETS[n].n}.<br><br>Use mídia vertical 9:16 (1080 × 1920).</div></div>`;
+  const x=l[st.i],m=(x.midias||[])[0];
+  return`<div class="fsv" data-pid="${esc(x.id)}">${SB(true)}<div class="st-media">${mEl(m,"",m&&m.t==="video"?'data-stv="1"':"")}</div>${statMark(x)}
+   <div class="st-bars">${l.map((_,j)=>`<i><b style="width:${j<st.i?100:0}%" ${j===st.i?'id="stBar"':""}></b></i>`).join("")}</div>
+   <div class="st-h">${AV(p,32)}<span>${esc(n==="fb"?p.nome:p.usuario)}${p.verificado&&n==="ig"?VERIF(12):""} <small>${esc(rel(x.data).replace("Agora","agora"))}</small></span><span class="grow"></span>${I("more",22)}${I("x",24)}</div>
+   <button class="stctl" type="button" data-act="stpause" aria-label="${st.paused?"Continuar":"Pausar"}">${st.paused?IF("play",14,"#fff"):I("pause",14,2.4)}</button>
+   ${x.link?`<div class="st-link">${I("link",16,2.2)}${esc(x.link.replace(/^https?:\/\//,"").toUpperCase())}</div>`:""}
+   <div class="st-zone l" data-act="stprev"></div><div class="st-zone r" data-act="stnext"></div>
+   <div class="st-foot"><span class="inp">${n==="fb"?"Responder…":"Enviar mensagem"}</span>${I("heart",26)}${I("send",25)}</div>${szHTML("story")}</div>`}
+function startStory(){stopStory();const bar=$("#stBar");if(!bar)return;const vid=$("#scr [data-stv]");
+  if(vid){vid.muted=opt.muted;if(!st.paused)vid.play().catch(()=>{});else vid.pause()}
+  let last=performance.now(),el=st.elapsed||0;
+  st.timer=setInterval(()=>{const now=performance.now();if(!st.paused)el+=now-last;last=now;st.elapsed=el;
+    let pct;if(vid&&vid.duration&&isFinite(vid.duration)){pct=vid.currentTime/vid.duration*100}else pct=el/5000*100;
+    bar.style.width=Math.min(100,pct)+"%";
+    if(!st.paused&&(pct>=100||(vid&&vid.ended))){stStep(1)}},60)}
+function stopStory(){clearInterval(st.timer);st.timer=null}
+function stStep(d){const n=st.list.length;if(!n)return;st.elapsed=0;st.i+=d;if(st.i>=n)st.i=0;if(st.i<0)st.i=0;renderPhone()}
+
+/* LinkedIn */
+function host(u){try{return new URL(/^https?:/i.test(u)?u:"https://"+u).hostname.replace(/^www\./,"")}catch(_){return(u||"").replace(/^https?:\/\//,"").split("/")[0]}}
+function readMin(t){return Math.max(1,Math.round((t||"").split(/\s+/).filter(Boolean).length/200))}
+function evDate(d){if(!d)return"Data a definir";const t=new Date(d);if(isNaN(t))return"";return t.toLocaleDateString("pt-BR",{weekday:"short",day:"numeric",month:"short",year:"numeric"}).replace(/\./g,"").toUpperCase()+(d.length>10?", "+d.slice(11,16):"")}
+function liCard(x,p,m){const img=(x.midias||[])[0];
+  if(x.formato==="artigo")return`<div class="li-card" data-art="${esc(x.id)}" role="button" tabindex="0" title="Abrir o artigo">${img?`<div class="md" style="aspect-ratio:1.91">${mEl(img)}</div>`:""}<div class="li-cb"><b>${esc(x.artTitulo||"Título do artigo")}</b><span>${x.newsletter?`${esc(x.newsletter)} · Newsletter`:`${esc(p.nome||"")} · ${readMin(x.legenda)} min de leitura`}</span></div></div>${x.newsletter?`<div class="li-nl"><span>${I("doc",16)} ${esc(x.newsletter)}</span><span class="li-sub">Inscrever-se</span></div>`:""}`;
+  if(x.formato==="link")return`<div class="li-card">${img?`<div class="md" style="aspect-ratio:1.91">${mEl(img)}</div>`:""}<div class="li-cb"><b>${esc(x.linkTitulo||x.url||"Título da página")}</b><span>${esc(host(x.url)||"seusite.com.br")}</span></div></div>`;
+  if(x.formato==="evento")return`<div class="li-card">${img?`<div class="md" style="aspect-ratio:4">${mEl(img)}</div>`:`<div class="li-evbg">${I("cal",30,1.6)}</div>`}<div class="li-cb"><span class="li-evd">${esc(evDate(x.evData))}</span><b>${esc(x.evNome||"Nome do evento")}</b><span>Evento de ${esc(p.nome||"")}</span><span>${esc(x.evTipo||"Online")}${x.evLocal?" · "+esc(x.evLocal):""}</span><span class="li-evb">Ver evento</span></div></div>`;
+  if(x.formato==="enquete"){const ops=(x.opcoes||[]).filter(o=>o&&o.trim());const dur=+(x.duracao||7);const rest=dur>=14?"2 semanas restantes":dur>=7?"1 semana restante":dur>=3?"3 dias restantes":"1 dia restante";
+    return`<div class="li-poll"><b>${esc(x.pergunta||"Sua pergunta aqui")}</b><span class="muted" style="font-size:12px">Os autores podem ver como você vota.</span>${(ops.length?ops:["Opção 1","Opção 2"]).map(o=>`<span class="li-op">${esc(o)}</span>`).join("")}<span class="muted" style="font-size:12.5px">${opt.nums?fmtN(Math.round(m.curt*1.6))+" votos · ":""}${rest}</span></div>`}
+  return""}
+function liArticle(id){const x=allPosts().find(y=>y.id===id);const p=liveProfile();if(!x){artOpen=null;return liFeed()}const img=(x.midias||[])[0];
+  const paras=(x.legenda||"Escreva o texto do artigo no campo \"Texto do artigo\".").split(/\n{2,}/);
+  return`${SB()}<div class="li-top"><button type="button" data-act="artback" aria-label="Voltar">${I("back",24,2)}</button><span style="flex:1;font-weight:600">${x.newsletter?esc(x.newsletter):"Artigo"}</span>${I("more",22)}</div>
+   <div style="background:var(--m-card);padding-bottom:20px">${img?`<div class="md" style="aspect-ratio:1.91">${mEl(img)}</div>`:""}
+   <h1 class="li-art-t">${esc(x.artTitulo||"Título do artigo")}</h1>
+   <div class="li-h" style="padding-top:4px">${AV(p,44)}<div class="li-who"><b>${esc(p.nome||"")}</b><div class="hl">${esc(p.headline||"")}</div><div>${esc(x.data?new Date(x.data).toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"}):"Hoje")}</div></div><span class="li-fol">${I("plus",16,2.2)}Seguir</span></div>
+   ${x.newsletter?`<div class="li-nl" style="margin:4px 14px 10px"><span>${I("doc",16)} ${esc(x.newsletter)}</span><span class="li-sub">Inscrever-se</span></div>`:""}
+   <div class="li-art-b">${paras.map(t=>`<p>${capHTML(t)}</p>`).join("")}</div></div>
+   <div style="height:70px"></div><div class="mbar abs" style="background:var(--m-card)"><span class="lbl">${I("thumb",22)}Gostei</span><span class="lbl">${I("comment",22)}Comentar</span><span class="lbl">${I("repost",22)}Compartilhar</span><span class="lbl">${I("send",21)}Enviar</span></div>`}
+let artOpen=null;
+function liFeed(){if(artOpen)return liArticle(artOpen);const p=liveProfile(),l=postsFor("li");
+  let h=`${SB()}<div class="li-top">${AV(p,32)}<span class="li-search">${I("search",18)}Pesquisar</span>${I("msg",24)}</div>`;
+  if(!l.length)h+=`<div class="p-empty" style="margin-top:8px"><b>Feed vazio</b>Os posts marcados para o LinkedIn aparecem aqui.</div>`;
+  h+=l.map(x=>{const m=met(x),ms=x.midias||[],key="li:"+x.id;let body="";
+    if(x.formato==="carrossel"&&ms.length){const r=Math.max(.8,Math.min(1,ratio(x,"li")));body=`<div class="li-doc">${statMark(x)}<div class="bar"><b>${esc(x.docTitulo||cut(x.legenda||"Documento",60,1).s)}</b><span class="pg">1 / ${ms.length}</span></div>${carousel(x,key,ms,r,{noCounter:true})}</div>`}
+    else if(ms.length&&x.formato!=="texto")body=`<div style="position:relative">${statMark(x)}${carousel(x,key,x.formato==="foto"?ms.slice(0,1):ms,ratio(x,"li"))}</div>`;
+    else if(x.formato==="texto")body=statMark(x)?`<div style="position:relative;height:26px">${statMark(x)}</div>`:"";
+    if(CARDF.includes(x.formato))body=`<div style="position:relative">${statMark(x)}${liCard(x,p,m)}</div>`;
+    if(x.formato==="enquete")body=`${statMark(x)?`<div style="position:relative;height:28px">${statMark(x)}</div>`:""}${liCard(x,p,m)}`;
+    return`<article class="li-post${focusId===x.id&&edit?" pinned":""}" data-pid="${esc(x.id)}"><div class="li-h">${AV(p,48)}<div class="li-who"><b>${esc(p.nome||"")}</b>${p.verificado?VERIF(13):""} <span>· Você</span><div class="hl">${esc(p.headline||p.categoria||"")}</div><div>${esc(rel(x.data,"li"))} · ${I("globe",12,2,'style="display:inline;vertical-align:-2px"')}</div></div>${I("more",22)}</div>
+     ${(()=>{const tx=x.formato==="artigo"?x.chamada:x.legenda;return tx?`<div class="li-txt">${capBlock(x,key,tx,210,3,"","…mais")}</div>`:""})()}${body}
+     <div class="li-stats"><span class="reacts" style="gap:6px"><span class="reacts"><i style="background:#378fe9;color:#fff">${IF("thumb",10,"#fff")}</i><i style="background:#df704d;color:#fff">♥</i><i style="background:#6dae4f;color:#fff">👏</i></span>${opt.nums?" "+fmtN(m.curt):""}</span>${opt.nums?`<span>${nm(m.com)} comentários · ${nm(m.comp)} compartilhamentos</span>`:""}</div>
+     <div class="li-acts"><span>${I("thumb",20)}Gostei</span><span>${I("comment",20)}Comentar</span><span>${I("repost",20)}Compartilhar</span><span>${I("send",19)}Enviar</span></div></article>`}).join("");
+  return h+`<div style="height:70px"></div><div class="mbar abs" style="background:var(--m-card)"><span class="lbl on">${I("home",24)}Início</span><span class="lbl">${I("users",24)}Rede</span><span class="lbl">${I("plusq",24)}Publicar</span><span class="lbl">${I("bell",24)}Notificações</span><span class="lbl">${I("brief",24)}Vagas</span></div>`}
+
+/* TikTok */
+function ttFeed(){const p=liveProfile(),l=postsFor("tt");
+  const items=l.length?l.map(x=>{const m=met(x),ms=x.midias||[],key="tt:"+x.id;const r=ms[0]&&ms[0].w?ms[0].w/ms[0].h:.56;const contain=r>.7;
+    const photo=x.formato!=="reel"&&ms.length>1;
+    return`<div class="vitem" data-pid="${esc(x.id)}">${photo?`<div class="md contain"><div class="car" data-car="${esc(key)}" data-n="${ms.length}"><div class="car-track">${ms.map(mm=>`<div class="slide">${mEl(mm)}</div>`).join("")}</div>${carBtns()}</div></div><div class="ttdots">${ms.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:`<div class="md${contain?" contain":""}">${mEl(ms[0])}</div>`}<div class="shade"></div>${statMark(x)}
+     <div class="rail"><div class="tt-follow">${AV(p,46)}<i>+</i></div><div>${IF("heart",32,"#fff")}${nm(m.curt)}</div><div>${IF("comment",30,"#fff")}${nm(m.com)}</div><div>${IF("save",28,"#fff")}${nm(m.saves)}</div><div>${IF("share",28,"#fff")}${nm(m.comp)}</div><div class="disc">${AV(p,20)}</div></div>
+     <div class="vcap" style="bottom:66px"><div class="who" style="margin-bottom:5px">${esc(p.nome||p.usuario)}${p.verificado?VERIF(13):""}<span style="font-weight:400;opacity:.8;font-size:13px">· ${esc(rel(x.data))}</span></div>${x.legenda?`<p>${capBlock(x,key,x.legenda,80,2,"","… mais")}</p>`:""}<div class="aud">${I("music",13,2)} som original - ${esc(p.usuario)}</div></div>${szHTML("tt")}</div>`}).join(""):`<div class="vitem"><div class="st-empty">Nenhum vídeo para o TikTok ainda.<br>Crie um post de vídeo, foto ou carrossel marcado para o TikTok.</div></div>`;
+  return`<div class="fsv">${SB(true)}<div class="tt-tabs"><span>Explorar</span><span>Seguindo</span><span class="on">Para você</span></div><div class="vfeed" style="bottom:56px">${items}</div>${ttNav("home")}</div>`}
+function ttNav(on){const dk=on==="home"||opt.dark;return`<div class="mbar abs${dk?" dk":""}"><span class="lbl${on==="home"?" on":""}">${I("home",24)}Início</span><span class="lbl">${I("users",24)}Amigos</span><span class="ttplus">${I("plus",20,2.6)}</span><span class="lbl">${I("inbox",24)}Caixa de entrada</span><span class="lbl${on==="perfil"?" on":""}" data-view-go="perfil" style="cursor:pointer">${I("user",24)}Perfil</span></div>`}
+function ttProfile(){const p=liveProfile(),l=postsFor("tt");const likes=+p.curtidasTT||l.reduce((s,x)=>s+met(x).curt,0);
+  return`${SB()}<div class="igp-top" style="justify-content:center;font-size:17px">${I("users",22)}<span style="flex:1;text-align:center">${esc(p.nome||"")} ${I("chev",14,2,'style="display:inline"')}</span>${I("menu",24)}</div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 16px 0">${AV(p,96)}<b style="font-size:16px">@${esc(p.usuario||"")}${p.verificado?VERIF(14):""}</b>
+  <div style="display:flex;gap:26px;text-align:center;font-size:13px;color:var(--m-muted)"><div><b style="display:block;color:var(--m-fg);font-size:17px">${fmtN(p.seguindo)}</b>Seguindo</div><div><b style="display:block;color:var(--m-fg);font-size:17px">${fmtN(p.seguidores)}</b>Seguidores</div>${opt.nums||p.curtidasTT?`<div><b style="display:block;color:var(--m-fg);font-size:17px">${fmtN(likes)}</b>Curtidas</div>`:""}</div>
+  <div class="igp-btns" style="width:100%;padding:6px 30px"><span>Editar perfil</span><span>Compartilhar perfil</span></div>
+  ${p.bio?`<div style="text-align:center;font-size:13.5px;white-space:pre-wrap">${capHTML(p.bio)}</div>`:""}${p.link?`<div style="font-weight:600;font-size:13px">${I("link",13,2,'style="display:inline;vertical-align:-2px"')} ${esc(p.link.replace(/^https?:\/\//,""))}</div>`:""}</div>
+  <div class="igp-tabs" style="margin-top:10px"><span class="on">${I("grid",22)}</span><span>${I("lock",22)}</span><span>${I("heart",22)}</span></div>
+  <div class="igp-grid">${l.map(x=>{const m=(x.capa&&x.formato==="reel")?x.capa:(x.midias||[])[0];return`<div class="tile" data-pid="${esc(x.id)}" data-ttile="${esc(x.id)}">${m&&media(m)?(m.t==="video"?`<video src="${esc(media(m))}#t=0.1" muted playsinline preload="metadata"></video>`:`<img src="${esc(media(m))}" alt="">`):`<div class="nm">Sem mídia</div>`}${opt.nums?`<span class="tv">${I("playo",13,2.2)}${fmtN(met(x).views)}</span>`:""}${x.formato!=="reel"&&(x.midias||[]).length>1?`<span class="ti">${I("stack",16)}</span>`:""}${statMark(x)}</div>`}).join("")}</div>
+  ${l.length?"":`<div class="p-empty"><b>Sem vídeos</b>Os posts marcados para o TikTok aparecem aqui.</div>`}<div style="height:70px"></div>${ttNav("perfil")}`}
+
+/* Facebook */
+function fbFeed(){const p=liveProfile(),l=postsFor("fb",["foto","carrossel","reel","texto","link"]),sts=postsFor("fb",["story"]);
+  let h=`${SB()}<div class="fb-top"><span class="fb-word">facebook</span><span class="fb-ic">${I("plus",20,2)}</span><span class="fb-ic">${I("search",19,2)}</span><span class="fb-ic">${I("msg",19,2)}</span></div>
+  <div class="fb-comp">${AV(p,40)}<span>No que você está pensando?</span>${I("image",24,1.8,'style="color:#45bd62"')}</div>
+  <div class="fb-stories"><div class="fb-st" style="background:var(--m-chip)">${p.foto?`<img src="${esc(media({a:p.foto,k:p.fotoK}))}" alt="" style="height:65%">`:""}<b style="color:var(--m-fg);text-shadow:none;text-align:center">Criar story</b></div>${sts.map(x=>`<div class="fb-st" data-act="fbstories">${mEl((x.midias||[])[0])}${AV(p,34)}<b>${esc(p.nome||"")}</b></div>`).join("")}</div>`;
+  if(!l.length)h+=`<div class="p-empty" style="margin-top:8px"><b>Feed vazio</b>Os posts marcados para o Facebook aparecem aqui.</div>`;
+  h+=l.map(x=>{const m=met(x),ms=x.formato==="foto"?(x.midias||[]).slice(0,1):(x.midias||[]),key="fb:"+x.id;
+    return`<article class="fb-post${focusId===x.id&&edit?" pinned":""}" data-pid="${esc(x.id)}"><div class="fb-h">${AV(p,40)}<div class="fb-who"><b>${esc(p.nome||"")}</b>${p.verificado?VERIF(13):""}<div>${esc(rel(x.data))} · ${I("globe",12,2,'style="display:inline;vertical-align:-2px"')}</div></div>${I("more",22)}${I("x",22)}</div>
+     ${x.legenda?`<div class="fb-txt">${capBlock(x,key,x.legenda,320,5,"","… Ver mais")}</div>`:""}<div style="position:relative">${statMark(x)}${x.formato==="link"?`<div class="fb-link">${ms[0]?`<div class="md" style="aspect-ratio:1.91">${mEl(ms[0])}</div>`:""}<div class="fb-lb"><span>${esc(host(x.url).toUpperCase()||"SEUSITE.COM.BR")}</span><b>${esc(x.linkTitulo||x.url||"Título da página")}</b></div></div>`:ms.length&&x.formato!=="texto"?fbMedia(x,ms):""}</div>
+     <div class="fb-stats"><span class="reacts" style="gap:6px"><span class="reacts"><i style="background:#1877f2;color:#fff">${IF("thumb",10,"#fff")}</i><i style="background:#f33e58;color:#fff">♥</i></span>${opt.nums?fmtN(m.curt):""}</span>${opt.nums?`<span>${nm(m.com)} comentários · ${nm(m.comp)} compartilhamentos</span>`:""}</div>
+     <div class="fb-acts"><span>${I("thumb",20)}Curtir</span><span>${I("comment",20)}Comentar</span><span>${I("send",19)}Enviar</span><span>${I("share",20)}Compartilhar</span></div></article>`}).join("");
+  return h+`<div style="height:20px"></div>`}
+function fbMedia(x,ms){const n=ms.length;if(n===1)return`<div class="md" style="aspect-ratio:${ratio(x,"fb")}">${mEl(ms[0])}</div>`;
+  const c=(m,extra)=>`<div class="c">${mEl(m)}${extra||""}</div>`;
+  if(n===2)return`<div class="fb-col" style="grid-template-columns:1fr 1fr;aspect-ratio:1">${c(ms[0])}${c(ms[1])}</div>`;
+  if(n===3)return`<div class="fb-col" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;aspect-ratio:1"><div class="c" style="grid-row:1/3">${mEl(ms[0])}</div>${c(ms[1])}${c(ms[2])}</div>`;
+  return`<div class="fb-col" style="grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;aspect-ratio:1">${ms.slice(0,4).map((m,i)=>c(m,i===3&&n>4?`<span class="plus">+${n-4}</span>`:"")).join("")}</div>`}
+
+/* vídeos: tocam quando aparecem */
+let io=null;
+function setupVideos(){if(io)io.disconnect();const vids=[...$("#scr").querySelectorAll("video:not([data-stv])")];
+  io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting&&e.intersectionRatio>.55&&!v.closest(".tile,.thumb,.mitem,.fb-st")){v.muted=opt.muted;v.play().catch(()=>{})}else v.pause()}),{root:$("#scr"),threshold:[0,.6]});
+  vids.forEach(v=>io.observe(v))}
+
+/* ---------- render geral ---------- */
+let rt=0;
+function renderAll(){renderTop();renderSide();renderViews();renderPhone()}
+function toSide(){if(innerWidth<=980)return;const r=$("#side").getBoundingClientRect();if(r.top<120)$("#side").scrollIntoView({block:"start"})}
+function schedPreview(){clearTimeout(rt);rt=setTimeout(()=>{renderPhone();updCounters()},110)}
+
+/* ---------- mídia: envio ---------- */
+async function dims(blob,isV){const u=URL.createObjectURL(blob);try{if(isV){return await new Promise(r=>{const v=document.createElement("video");v.preload="metadata";v.onloadedmetadata=()=>r({w:v.videoWidth,h:v.videoHeight});v.onerror=()=>r({w:0,h:0});v.src=u})}
+  return await new Promise(r=>{const im=new Image();im.onload=()=>r({w:im.naturalWidth,h:im.naturalHeight});im.onerror=()=>r({w:0,h:0});im.src=u})}finally{setTimeout(()=>URL.revokeObjectURL(u),2000)}}
+async function shrink(file,w,h){const max=2160;if(file.type==="image/gif"||(Math.max(w,h)<=max&&file.size<4e6))return{blob:file,w,h};
+  const s=Math.min(1,max/Math.max(w,h)),W=Math.round(w*s),H=Math.round(h*s);
+  const bmp=await createImageBitmap(file);const c=document.createElement("canvas");c.width=W;c.height=H;c.getContext("2d").drawImage(bmp,0,0,W,H);
+  const type=file.type==="image/png"?"image/webp":"image/jpeg";const blob=await new Promise(r=>c.toBlob(r,type,.9));return{blob:blob||file,w:W,h:H}}
+async function prep(file){const isV=/^video\//.test(file.type);
+  if(file.type==="video/quicktime"||/\.mov$/i.test(file.name))throw new Error("Vídeo .MOV não é aceito. Exporte em MP4.");
+  if(!/^(image\/(png|jpeg|webp|gif)|video\/(mp4|webm))$/.test(file.type))throw new Error(`${file.name}: formato não aceito.`);
+  let{w,h}=await dims(file,isV);let blob=file;if(!isV){const r=await shrink(file,w,h);blob=r.blob;w=r.w;h=r.h}
+  if(blob.size>20*1024*1024)throw new Error(`${file.name} passa de 20 MB. Comprima antes de enviar.`);
+  if(assets){const up=await assets.upload(blob,{type:blob.type||file.type});return{a:up.id,t:isV?"video":"img",w,h}}
+  const k="L"+Math.random().toString(36).slice(2);localBlobs[k]=URL.createObjectURL(blob);return{k,t:isV?"video":"img",w,h}}
+async function addFiles(files,target){if(!edit||!files.length)return;const ed=edit;
+  if(target==="midias"&&["foto","reel","story"].includes(ed.d.formato)&&files.length>1){ed.d.formato="carrossel"}
+  uploading+=files.length;if(ed.kind==="post")$("#mgrid")&&($("#mgrid").innerHTML=mediaGrid(ed.d));
+  for(const f of files){try{const m=await prep(f);
+      if(target==="capa")ed.d.capa=m;else if(target==="avatar"){if(m.a)ed.d.foto=m.a;else{ed.d.foto="";ed.d.fotoK=m.k}}
+      else{if(["foto","reel","story","artigo","link","evento"].includes(ed.d.formato))ed.d.midias=[m];else ed.d.midias=[...(ed.d.midias||[]),m]}
+    }catch(err){toast(err&&err.code==="too_large"?"Arquivo grande demais (máx. 20 MB).":err&&err.code==="quota_or_state"?"O espaço de mídia do simulador acabou. Exclua posts antigos.":err&&err.message&&!err.code?err.message:"Não deu para enviar "+f.name)}
+    finally{uploading--}
+    if(edit===ed){renderSide();schedPreview()}}
+}
+$("#fileIn").onchange=e=>{const f=[...e.target.files];const t=e.target.dataset.for||"midias";e.target.value="";addFiles(f,t)};
+$("#avIn").onchange=e=>{const f=[...e.target.files];e.target.value="";addFiles(f,"avatar")};
+
+/* ---------- gravação ---------- */
+function newId(col){return db?db.collection(col).doc().id:("l"+Date.now().toString(36)+Math.random().toString(36).slice(2,6))}
+const clean=o=>JSON.parse(JSON.stringify(o,(k,v)=>v===undefined?null:v));
+async function put(col,id,data){if(db)return db.collection(col).doc(id).set(clean(data));const arr=col==="posts"?posts:col==="compartilhamentos"?shares:perfis;const i=arr.findIndex(x=>x.id===id);const row={...clean(data),id};if(i<0)arr.push(row);else arr[i]=row}
+async function del(col,id){if(db)return db.collection(col).doc(id).delete();const arr=col==="posts"?posts:col==="compartilhamentos"?shares:perfis;const i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1)}
+async function upd(col,id,data){if(db)return db.collection(col).doc(id).update(clean(data));const arr=col==="posts"?posts:col==="compartilhamentos"?shares:perfis;const r=arr.find(x=>x.id===id);if(r)Object.assign(r,data)}
+function failWrite(err){if(err&&(err.code==="permission_denied"||err.code==="invalid_argument"))toast("Você tem acesso só de leitura.");else toast("Não foi possível salvar. Tente de novo.")}
+function readForm(){const f=$("#pf")||$("#pff");if(!f||!edit)return;const d=edit.d;
+  f.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{const n=el.name;let v=el.type==="checkbox"?el.checked:el.value;
+    if(el.type==="number"||el.type==="range")v=v===""?"":+v;
+    if(n.startsWith("m.")){d.metricas=d.metricas||{};d.metricas[n.slice(2)]=v}else if(/^op\d$/.test(n)){d.opcoes=d.opcoes||[];d.opcoes[+n[2]]=v}else d[n]=v})}
+async function savePost(){readForm();const d=edit.d;if(!(d.redes||[]).length)return toast("Escolha pelo menos uma rede.");
+  if(uploading)return toast("Espere o envio da mídia terminar.");
+  const body={...d};if(!assets&&!localMode)body.midias=(d.midias||[]).filter(m=>m.a);
+  const id=edit.id;try{await put("posts",id,body);if(localMode)posts=[...posts];edit=null;focusId=id;toast("Post salvo");renderAll()}catch(err){failWrite(err)}}
+async function cleanupAssets(ids){if(!assets||!ids.length)return;const used=new Set();posts.forEach(p=>{(p.midias||[]).forEach(m=>m.a&&used.add(m.a));p.capa&&p.capa.a&&used.add(p.capa.a)});perfis.forEach(p=>p.foto&&used.add(p.foto));
+  for(const id of ids)if(!used.has(id))try{await assets.delete(id)}catch(_){}}
+async function delPost(id){const p=posts.find(x=>x.id===id);const ids=p?[...(p.midias||[]).map(m=>m.a),p.capa&&p.capa.a].filter(Boolean):[];
+  try{await del("posts",id);edit=null;focusId=null;toast("Post excluído");renderAll();setTimeout(()=>cleanupAssets(ids),1500)}catch(err){failWrite(err)}}
+async function dupPost(){readForm();const d=JSON.parse(JSON.stringify(edit.d));const id=newId("posts");d.ordem=Math.min(0,...posts.filter(p=>p.perfil===cur).map(p=>p.ordem??0))-1;d.status="rascunho";
+  try{await put("posts",id,d);edit={kind:"post",isNew:false,id,d};focusId=id;toast("Cópia criada. Você está editando a cópia.");renderAll()}catch(err){failWrite(err)}}
+async function savePerfil(){readForm();const d=edit.d;if(!(d.nome||"").trim())return toast("Dê um nome ao perfil.");d.usuario=(d.usuario||"").replace(/^@/,"").trim()||d.nome.toLowerCase().replace(/[^a-z0-9._]/g,"");
+  const id=edit.id;try{await put("perfis",id,d);cur=id;ls.set("sim-pf",id);edit=null;toast("Perfil salvo");renderAll()}catch(err){failWrite(err)}}
+async function delPerfil(){const id=edit.id;const ps=posts.filter(p=>p.perfil===id);const ids=[];ps.forEach(p=>{(p.midias||[]).forEach(m=>m.a&&ids.push(m.a));p.capa&&p.capa.a&&ids.push(p.capa.a)});const pfx=perfis.find(x=>x.id===id);if(pfx&&pfx.foto)ids.push(pfx.foto);
+  try{for(const p of ps)await del("posts",p.id);await del("perfis",id);edit=null;cur=(perfis.find(x=>x.id!==id)||{}).id||"";toast("Perfil excluído");renderAll();setTimeout(()=>cleanupAssets(ids),1500)}catch(err){failWrite(err)}}
+async function reorder(dragId,dropId){const grid=postsFor("ig",["foto","carrossel","reel"]).filter(x=>posts.some(p=>p.id===x.id));const from=grid.findIndex(x=>x.id===dragId),to=grid.findIndex(x=>x.id===dropId);if(from<0||to<0||from===to)return;
+  const vals=grid.map(x=>x.ordem??0).sort((a,b)=>a-b);const uniq=new Set(vals).size===vals.length;const nv=uniq?vals:grid.map((_,i)=>i);
+  const arr=[...grid];const[m]=arr.splice(from,1);arr.splice(to,0,m);
+  try{for(let i=0;i<arr.length;i++){if((arr[i].ordem??0)!==nv[i]){const p=posts.find(x=>x.id===arr[i].id);if(p)p.ordem=nv[i];await upd("posts",arr[i].id,{ordem:nv[i]})}}toast("Grade reorganizada");renderAll()}catch(err){failWrite(err)}}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",e=>{const t=e.target;
+  const nb=t.closest("[data-net]");if(nb){net=nb.dataset.net;artOpen=null;ls.set("sim-net",net);if(edit&&edit.kind==="post")autoView(edit.d);renderAll();return}
+  const vb=t.closest("[data-view]");if(vb){view[net]=vb.dataset.view;ls.set("sim-view",JSON.stringify(view));renderViews();renderPhone();return}
+  const vg=t.closest("[data-view-go]");if(vg&&NETS[net].views.some(v=>v[0]===vg.dataset.viewGo)){view[net]=vg.dataset.viewGo;renderViews();renderPhone();return}
+  const tg=t.closest("[data-tg]");if(tg){const k=tg.dataset.tg;opt[k]=!opt[k];if(k==="dark")ls.set("sim-dark",opt.dark?"1":"0");if(k==="plan")ls.set("sim-plan",opt.plan?"1":"0");if(k==="nums")ls.set("sim-nums",opt.nums?"1":"0");
+    if(k==="muted"){$$("#scr video").forEach(v=>v.muted=opt.muted)}renderViews();if(k!=="muted")renderPhone();return}
+  const ar=t.closest("[data-art]");if(ar){artOpen=ar.dataset.art;scrollMem.top=0;$("#scr").scrollTop=0;renderPhone();$("#scr").scrollTop=0;return}
+  const cg=t.closest("[data-car-go]");if(cg){const tr=cg.closest(".car").querySelector(".car-track");const i=Math.round(tr.scrollLeft/tr.clientWidth)+(+cg.dataset.carGo);tr.scrollTo({left:i*tr.clientWidth,behavior:"smooth"});return}
+  if(carDragMoved){carDragMoved=false;return}
+  const ex=t.closest("[data-exp]");if(ex){expanded.add(ex.dataset.exp);renderPhone();return}
+  const fl=t.closest("[data-filt]");if(fl){filt=fl.dataset.filt;ls.set("sim-filt",filt);renderSide();return}
+  const ed=t.closest("[data-edit]");if(ed){if(edit&&edit.kind==="post"&&edit.id!==ed.dataset.edit)readForm();pendingFocus=true;openPost(ed.dataset.edit);return}
+  const pg=t.closest("[data-pfgo]");if(pg){cur=pg.dataset.pfgo;ls.set("sim-pf",cur);renderAll();return}
+  const shr=t.closest("[data-shr]");if(shr&&edit&&edit.kind==="share"){readShare();const s2=new Set(edit.d.redes||[]);s2.has(shr.dataset.shr)?s2.delete(shr.dataset.shr):s2.add(shr.dataset.shr);edit.d.redes=[...s2];edit.done=false;renderSide();return}
+  const ft=t.closest("[data-fmt]");if(ft&&edit){readForm();edit.d.formato=ft.dataset.fmt;{const ok=(edit.d.redes||[]).filter(r=>NETS[r].acc.includes(edit.d.formato));edit.d.redes=ok.length?ok:[Object.keys(NETS).find(r=>NETS[r].acc.includes(edit.d.formato))];if(!edit.d.redes.includes(net))net=edit.d.redes[0]}if(["foto","story","reel"].includes(edit.d.formato)&&(edit.d.midias||[]).length>1)toast("Esse formato usa só o primeiro item.");autoView(edit.d);renderAll();return}
+  const rd=t.closest("[data-rede]");if(rd&&edit){readForm();const r=rd.dataset.rede,s=new Set(edit.d.redes||[]);s.has(r)?s.delete(r):s.add(r);edit.d.redes=[...s];if(s.has(r)&&r!==net){net=r;autoView(edit.d)}renderAll();return}
+  const mv=t.closest("[data-mv]");if(mv&&edit){const[i,d]=mv.dataset.mv.split(":").map(Number);const a=edit.d.midias;const j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];$("#mgrid").innerHTML=mediaGrid(edit.d);schedPreview();return}
+  const mx=t.closest("[data-mx]");if(mx&&edit){edit.d.midias.splice(+mx.dataset.mx,1);renderSide();schedPreview();return}
+  const tl=t.closest("[data-tile]");if(tl&&!t.closest(".statmark")){focusId=tl.dataset.tile;pendingFocus=true;view.ig="feed";renderViews();renderPhone();renderSide();return}
+  const ttl=t.closest("[data-ttile]");if(ttl){focusId=ttl.dataset.ttile;pendingFocus=true;view.tt="fyp";renderViews();renderPhone();return}
+  const vid=t.closest("#scr video");if(vid&&!t.closest(".tile")){opt.muted=!opt.muted;$$("#scr video").forEach(v=>v.muted=opt.muted);renderViews();toast(opt.muted?"Som desligado":"Som ligado");return}
+  const a=t.closest("[data-act]");if(!a)return;const act=a.dataset.act;
+  if(act==="newpost")return newPost();
+  if(act==="newpf")return openPerfil(true);
+  if(act==="editpf")return openPerfil(false);
+  if(act==="cancel"){edit=null;renderAll();return}
+  if(act==="toprev"){$(".stage").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(act==="save")return savePost();
+  if(act==="dup")return dupPost();
+  if(act==="del"){if(a.dataset.confirm){return delPost(edit.id)}a.dataset.confirm="1";a.textContent="Confirmar exclusão";setTimeout(()=>{if(a.isConnected){delete a.dataset.confirm;a.textContent="Excluir"}},4000);return}
+  if(act==="capa"){$("#fileIn").dataset.for="capa";$("#fileIn").click();return}
+  if(act==="capa-x"){edit.d.capa=null;renderSide();schedPreview();return}
+  if(act==="avatar"){$("#avIn").click();return}
+  if(act==="avatar-x"){edit.d.foto="";edit.d.fotoK="";renderSide();schedPreview();return}
+  if(act==="savepf")return savePerfil();
+  if(act==="share")return openShare();
+  if(act==="saveshare")return saveShare();
+  if(act==="copylink"){const t=$("#plink").textContent;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Link copiado"),()=>{const r=document.createRange();r.selectNodeContents($("#plink"));const sl=getSelection();sl.removeAllRanges();sl.addRange(r);toast("Selecionei o link: use Ctrl+C")});return}
+  if(act==="copyphrase"){const t=$("#phrase").textContent;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Frase copiada"),()=>{const r=document.createRange();r.selectNodeContents($("#phrase"));const sl=getSelection();sl.removeAllRanges();sl.addRange(r);toast("Selecionei a frase: use Ctrl+C")});return}
+  if(act==="delshare"){if(!a.dataset.confirm){a.dataset.confirm="1";a.textContent="Confirmar";return}del("compartilhamentos",edit.id).then(()=>{edit=null;toast("Pedido removido");renderAll()}).catch(failWrite);return}
+  if(act==="delpf"){$("#pfDelConf").hidden=false;return}
+  if(act==="delpf2")return delPerfil();
+  if(act==="openstories"){if(net==="ig"){view.ig="stories";st.key="";renderViews();renderPhone()}return}
+  if(act==="fbstories"){view.fb="stories";st.key="";renderViews();renderPhone();return}
+  if(act==="stpause"){st.paused=!st.paused;const v=$("#scr [data-stv]");if(v){st.paused?v.pause():v.play().catch(()=>{})}a.innerHTML=st.paused?IF("play",14,"#fff"):I("pause",14,2.4);return}
+  if(act==="artback"){artOpen=null;renderPhone();return}
+  if(act==="stnext")return stStep(1);
+  if(act==="stprev")return stStep(-1);
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-edit]"))e.target.click();if(e.key==="Escape"&&edit){edit=null;renderAll()}});
+$("#side").addEventListener("input",e=>{if(!edit)return;if(edit.kind==="share")return;const el=e.target;if(!el.name)return;readForm();if(el.name==="legenda")updCounters();schedPreview()});
+$("#side").addEventListener("change",e=>{if(!edit)return;if(edit.kind==="share"){readShare();if(e.target.name==="filtro"||e.target.name==="slug"){renderSide()}return}readForm();schedPreview()});
+$("#scr").addEventListener("scroll",e=>{const t=e.target;if(t.classList&&t.classList.contains("car-track"))carUpd(t)},true);
+$("#pfSel").onchange=e=>{cur=e.target.value;ls.set("sim-pf",cur);if(edit&&edit.kind==="post")edit=null;renderAll()};
+$("#newPost").onclick=()=>newPost();
+$("#newPf").onclick=()=>openPerfil(true);
+function openPerfil(isNew){const p=isNew?{nome:"",usuario:"",seguidores:1000,seguindo:300}:JSON.parse(JSON.stringify(pf()));const id=isNew?newId("perfis"):p.id;delete p.id;edit={kind:"perfil",isNew,id,d:p};renderAll();toSide()}
+// arrastar na grade
+let dragId=null;
+$("#scr").addEventListener("dragstart",e=>{const t=e.target.closest&&e.target.closest("[data-tile]");if(!t)return;dragId=t.dataset.tile;t.classList.add("dragging");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",dragId)}catch(_){}});
+$("#scr").addEventListener("dragover",e=>{const t=e.target.closest&&e.target.closest("[data-tile]");if(!t||!dragId)return;e.preventDefault();$$(".tile.over").forEach(x=>x.classList.remove("over"));t.classList.add("over")});
+$("#scr").addEventListener("drop",e=>{const t=e.target.closest&&e.target.closest("[data-tile]");if(!t||!dragId)return;e.preventDefault();const d=dragId;dragId=null;reorder(d,t.dataset.tile)});
+$("#scr").addEventListener("dragend",()=>{dragId=null;$$(".tile.over,.tile.dragging").forEach(x=>x.classList.remove("over","dragging"))});
+
+/* arrastar o carrossel com o mouse e setas do teclado */
+let carDrag=null,carDragMoved=false;
+$("#scr").addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0)return;const tr=e.target.closest(".car-track");if(!tr||e.target.closest(".car-btn"))return;
+  carDrag={tr,x:e.clientX,sl:tr.scrollLeft,moved:false};});
+window.addEventListener("pointermove",e=>{if(!carDrag)return;const dx=e.clientX-carDrag.x;if(Math.abs(dx)>4&&!carDrag.moved){carDrag.moved=true;carDrag.tr.classList.add("dragging")}if(carDrag.moved){carDrag.tr.scrollLeft=carDrag.sl-dx;e.preventDefault()}});
+window.addEventListener("pointerup",e=>{if(!carDrag)return;const{tr,moved,x,sl}=carDrag;carDrag=null;if(!moved)return;carDragMoved=true;setTimeout(()=>carDragMoved=false,50);
+  const w=tr.clientWidth,dx=e.clientX-x;let i=Math.round(sl/w);if(dx<-w*.15)i++;else if(dx>w*.15)i--;i=Math.max(0,Math.min(i,tr.children.length-1));
+  tr.scrollTo({left:i*w,behavior:"smooth"});setTimeout(()=>tr.classList.remove("dragging"),350)});
+document.addEventListener("keydown",e=>{if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+  const ph=$("#phone");if(!ph.matches(":hover"))return;if(isStoryView()){e.preventDefault();return stStep(e.key==="ArrowRight"?1:-1)}
+  const r=ph.getBoundingClientRect();const tr=[...ph.querySelectorAll(".car-track")].find(t=>{const b=t.getBoundingClientRect();return b.top<r.bottom-80&&b.bottom>r.top+120});
+  if(!tr)return;e.preventDefault();const i=Math.round(tr.scrollLeft/tr.clientWidth)+(e.key==="ArrowRight"?1:-1);tr.scrollTo({left:i*tr.clientWidth,behavior:"smooth"})});
+
+/* ---------- início ---------- */
+renderAll();
+setStatus("Conectando ao banco do simulador…");
+(async()=>{
+  db=await claude.use("db");
+  if(!db){localMode=true;setStatus("Modo de teste: esta visualização não conseguiu o banco. Dá para montar posts, mas nada fica salvo ao fechar. Abra a página logado no claude.ai para salvar.",true);
+    perfis=[{id:"local",nome:"{ger}",usuario:"ger.consultoria",seguidores:1200,seguindo:350}];cur="local";renderAll();return}
+  const user=await claude.use("user");
+  if(user){try{const w=await user.can("data.write");if(w===false)canWrite=false}catch(_){}}
+  assets=await claude.use("assets");
+  let got={a:false,b:false};const timer=setTimeout(()=>{if(!got.a)setStatus("Os dados ainda não chegaram. Verifique a conexão; a página continua tentando.",true)},10000);
+  const done=()=>{if(got.a&&got.b){clearTimeout(timer);setStatus(canWrite?"":"Você está vendo em modo leitura: pode navegar pelas prévias, mas não editar.")}};
+  db.collection("perfis").onSnapshot(s=>{perfis=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt"));if(!perfis.some(p=>p.id===cur))cur=(perfis[0]||{}).id||"";if(!s.metadata.fromCache)got.a=true;done();if(edit)renderTop(),renderPhone();else renderAll()},()=>{clearTimeout(timer);setStatus("A conexão com o banco caiu. Recarregue a página.",true)});
+  db.collection("compartilhamentos").onSnapshot(s=>{shares=s.docs.map(d=>({id:d.id,...d.data()}));if(edit&&edit.kind==="share"){readShare();renderSide()}else if(!edit)renderSide()},()=>{});
+  db.collection("posts").onSnapshot(s=>{posts=s.docs.map(d=>({id:d.id,...d.data()}));if(!s.metadata.fromCache)got.b=true;done();if(edit)renderPhone();else renderAll()},()=>{});
+})();
+</script>
