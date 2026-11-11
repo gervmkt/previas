@@ -26,7 +26,8 @@ for x in posts:
     if x.get("capa"):fix(x["capa"])
 if perfil.get("foto"):
     fn=files[perfil["foto"]];shutil.copy(os.path.join(mdir,fn),os.path.join(site,"media",fn));perfil["foto"]=fn
-data={"perfis":[perfil],"posts":posts,"redes":redes}
+import datetime
+data={"perfis":[perfil],"posts":posts,"redes":redes,"geradoEm":datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
 def rep(a,b):
     global s
     assert s.count(a)==1,(a[:60],s.count(a));s=s.replace(a,b)
@@ -36,7 +37,8 @@ i=s.index('(async()=>{\n  db=await claude.use("db");');j=s.index('})();',i)+5
 boot='''(function(){const D=window.__PREVIA;canWrite=false;const r=D.redes||[];
   if(r.length){Object.keys(NETS).forEach(k=>{if(!r.includes(k))delete NETS[k]});if(!NETS[net])net=Object.keys(NETS)[0]}
   perfis=D.perfis;posts=D.posts;cur=perfis[0].id;setStatus("");renderAll()})();
-(function(){const _rp=renderPhone;renderPhone=function(){_rp();document.getElementById("phone").classList.toggle("auto",!isFull())};renderPhone()})();'''
+(function(){const _rp=renderPhone;renderPhone=function(){_rp();document.getElementById("phone").classList.toggle("auto",!isFull())};renderPhone()})();
+(function(){const D=window.__PREVIA;if(!D.geradoEm)return;const t=new Date(D.geradoEm);if(isNaN(t))return;const f=t.toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}).replace(","," às");const h=document.querySelector(".hbar");if(!h)return;const s=document.createElement("span");s.className="ver";s.textContent="Versão de "+f;h.appendChild(s)})();'''
 s=s[:i]+boot+s[j:]
 s=s.replace('setStatus("Carregando a prévia…");','')
 nome=perfil.get("nome") or perfil.get("usuario") or slug
@@ -46,7 +48,7 @@ html=f'''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive"><title>{{ger}} Prévia · {nome}</title>
 <style>*,*::before,*::after{{box-sizing:border-box}}html{{-webkit-text-size-adjust:100%}}body{{margin:0}}</style>
-<style>.side{{display:none!important}}.layout{{grid-template-columns:minmax(0,1fr)!important;justify-items:center}}.stage{{position:static!important}}.statmark{{display:none!important}}.phone.auto{{height:auto!important;min-height:0!important}}.phone.auto .scr{{position:relative;inset:auto;overflow:visible}}.phone.auto .sb,.phone.auto .ig-top,.phone.auto .li-top,.phone.auto .fb-top,.phone.auto .igp-tabs{{position:relative!important;top:auto!important}}</style>
+<style>.side{{display:none!important}}.layout{{grid-template-columns:minmax(0,1fr)!important;justify-items:center}}.stage{{position:static!important}}.statmark{{display:none!important}}.hbar .ver{{margin-left:auto;color:var(--band-muted);font-size:12.5px;font-weight:500;white-space:nowrap}}.phone.auto{{height:auto!important;min-height:0!important}}.phone.auto .scr{{position:relative;inset:auto;overflow:visible}}.phone.auto .sb,.phone.auto .ig-top,.phone.auto .li-top,.phone.auto .fb-top,.phone.auto .igp-tabs{{position:relative!important;top:auto!important}}</style>
 <script>window.__PREVIA={payload};</script>
 </head><body>
 {s}
