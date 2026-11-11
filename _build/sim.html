@@ -516,7 +516,7 @@ function openShare(){const p=pf();const sh=shareOf(p.id);
   edit={kind:"share",id:p.id,isNew:!sh,d:sh?JSON.parse(JSON.stringify(sh)):{redes:used.length?used:["ig"],filtro:"aprov",cliente:""},done:false};delete edit.d.id;renderAll();toSide()}
 function shareCount(d,pid){return posts.filter(x=>x.perfil===pid&&(x.redes||[]).some(r=>(d.redes||[]).includes(r)&&NETS[r].acc.includes(x.formato))&&passFiltro(x,d.filtro)).length}
 function passFiltro(x,f){return f==="emaprov"?x.status==="aprovacao":f==="aprov"?["aprovacao","aprovado","agendado","publicado"].includes(x.status):true}
-const TRIG_ID="__TRIG__";const PREVIA_BASE="https://gervmkt.github.io/previas/";
+const TRIG_ID="trig_01STUwXrkQvx9eZGg8FBTkfd";const PREVIA_BASE="https://gervmkt.github.io/previas/";
 function slugify(t){return(t||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)}
 function shareState(sh){if(!sh)return"novo";if(sh.status==="erro"&&(!sh.atualizadoEm||sh.erroEm>=sh.pedidoEm))return"erro";if(sh.pedidoEm&&(!sh.atualizadoEm||sh.pedidoEm>sh.atualizadoEm))return sh.status==="manual"?"manual":"gerando";return"pronto"}
 function linkMsg(sh,p){return`Oi! Aqui está a prévia dos posts da ${p.nome||""} para você ver como vão ficar nas redes: ${sh.previaUrl}`}
