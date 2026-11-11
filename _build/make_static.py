@@ -14,6 +14,7 @@ for f in sorted(os.listdir(posts_dir)):
     x=json.load(open(os.path.join(posts_dir,f)));x.setdefault("id",f.rsplit(".",1)[0])
     x["redes"]=[r for r in x.get("redes",[]) if r in redes and x.get("formato") in ACC[r]]
     if not x["redes"] or (OK and x.get("status") not in OK):continue
+    if x.get("formato") not in ("texto","enquete","link") and not (x.get("midias") or []):continue
     x.pop("notas",None);x["perfil"]=perfil["id"];posts.append(x)
 site=os.path.join(out,slug);os.makedirs(os.path.join(site,"media"),exist_ok=True)
 files={f.rsplit(".",1)[0]:f for f in os.listdir(mdir)}
@@ -44,6 +45,7 @@ html=f'''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive"><title>{{ger}} Prévia · {nome}</title>
 <style>*,*::before,*::after{{box-sizing:border-box}}html{{-webkit-text-size-adjust:100%}}body{{margin:0}}</style>
+<style>.side{{display:none!important}}.layout{{grid-template-columns:minmax(0,1fr)!important;justify-items:center}}.stage{{position:static!important}}</style>
 <script>window.__PREVIA={payload};</script>
 </head><body>
 {s}
