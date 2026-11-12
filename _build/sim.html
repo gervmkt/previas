@@ -137,6 +137,31 @@ input[type=range]{padding:0;background:none}
 .prog-steps .done{color:var(--fg)}
 .prog-steps .on{color:var(--fg);font-weight:700}
 .num{font-variant-numeric:tabular-nums;font-weight:700}
+.st-poll{position:absolute;left:50%;transform:translate(-50%,-50%);width:74%;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgb(0 0 0/.28);z-index:6;color:#111;text-align:center;overflow:hidden}
+.st-poll>b{display:block;padding:14px 14px 10px;font-size:16px;line-height:1.25;font-weight:700}
+.st-poll .opts{display:flex;flex-direction:column;gap:6px;padding:0 12px 12px}
+.st-poll .opts button{position:relative;overflow:hidden;background:#efefef!important;border-radius:10px;padding:10px 12px!important;font-weight:700!important;font-size:14px!important;display:flex;justify-content:space-between;align-items:center;color:#111!important}
+.st-poll .opts button i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#c7d2fe,#fbcfe8);z-index:0;transition:width .4s}
+.st-poll .opts button span,.st-poll .opts button em{position:relative;z-index:1;font-style:normal}
+.st-poll .opts.two{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;border-top:1px solid #e6e6e6}
+.st-poll .opts.two button{background:#fff!important;border-radius:0;padding:14px 6px!important;flex-direction:column;justify-content:center;gap:2px}
+.st-poll .opts.two button+button{border-left:1px solid #e6e6e6}
+.st-poll .opts.two button span{font-size:21px;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#4f5bd5,#d62976,#fa7e1e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.st-poll .opts.two button em{font-size:13px;font-weight:700;color:#555}
+.st-poll .opts button.me{outline:2px solid #d62976;outline-offset:-2px}
+.sorder{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sorder[hidden]{display:none}
+.so-h{display:flex;flex-direction:column;gap:2px}.so-h b{font-size:14px}.so-h span{font-size:12.5px;color:var(--muted)}
+.so-gl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.so-row{display:flex;gap:8px;flex-wrap:wrap}
+.so-it{position:relative;width:62px;cursor:grab;touch-action:none;user-select:none;transition:margin .12s}
+.so-it.drag{cursor:grabbing;z-index:5;opacity:.9;transition:none}
+.so-it.gap{margin-left:22px}
+.so-th{width:62px;height:100px;border-radius:9px;overflow:hidden;background:var(--sunk);border:2px solid transparent}
+.so-it.on .so-th{border-color:var(--yellow)}
+.so-th img,.so-th video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.so-n{position:absolute;top:4px;left:4px;background:var(--ink);color:var(--yellow);font:800 11px/18px var(--font);min-width:18px;height:18px;border-radius:99px;text-align:center}
+.so-t{display:block;text-align:center;font:600 11.5px/1.6 var(--mono);color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--yellow);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60}
 
 /* ===== celular ===== */
@@ -622,6 +647,7 @@ function renderSide(){
   const l=mine.filter(x=>!filt||x.status===filt||(filt==="rede:"+net&&(x.redes||[]).includes(net)));
   const cnt=k=>mine.filter(x=>x.status===k).length;
   $("#side").innerHTML=`<div class="panel"><div class="pcard">${AV(p,56)}<div style="flex:1;min-width:0"><div class="nm">${esc(p.nome||"")}${p.verificado?VERIF(15):""}</div><div class="rsub">@${esc(p.usuario||"")} · ${fmtN(p.seguidores)} seguidores</div>${p.headline?`<div class="rsub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.headline)}</div>`:""}${shareLine(p)}</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:6px"><button class="btn sm primary" type="button" data-act="share"${canWrite?"":" disabled"}>Compartilhar</button><button class="btn sm" type="button" data-act="editpf"${canWrite?"":" disabled"}>Editar perfil</button></div></div></div>
+  <div class="sorder" id="sorder" hidden></div>
   <div class="panel">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"><h2 style="flex:1">Posts</h2><button class="btn primary sm" type="button" data-act="newpost"${canWrite?"":" disabled"}>Novo post</button></div>
     <div class="chips" style="margin-bottom:10px"><button class="chip" type="button" data-filt="" aria-pressed="${!filt}">Todos ${mine.length}</button>${STAT.filter(s=>cnt(s[0])).map(s=>`<button class="chip" type="button" data-filt="${s[0]}" aria-pressed="${filt===s[0]}">${s[1]} ${cnt(s[0])}</button>`).join("")}</div>
@@ -674,7 +700,11 @@ function renderPostEditor(){const d=edit.d,ok=canWrite;
    <label>Data e hora do evento<input type="datetime-local" name="evData" value="${esc(d.evData)}"></label>
    <label>Tipo<select name="evTipo">${["Online","Presencial"].map(k=>`<option${(d.evTipo||"Online")===k?" selected":""}>${k}</option>`).join("")}</select></label>
    <label class="full">Local ou plataforma<input name="evLocal" value="${esc(d.evLocal)}" placeholder="LinkedIn Live, Zoom, endereço…"></label>`:""}
-   ${isS?`<label class="full">Figurinha de link (opcional)<input name="link" value="${esc(d.link)}" placeholder="seusite.com.br"></label>`:`<div class="sec">Texto</div>
+   ${isS?`<label class="full">Figurinha de link (opcional)<input name="link" value="${esc(d.link)}" placeholder="seusite.com.br"></label>
+   ${(d.redes||[]).includes("ig")?`<div class="sec">Enquete no story (opcional, Instagram)</div>
+   <label class="full">Pergunta<input name="enqPergunta" maxlength="80" value="${esc(d.enqPergunta)}" placeholder="Ex.: Você já contratou pelo LinkedIn?"></label>
+   ${[0,1,2,3].map(i=>`<label>Opção ${i+1}${i>1?" (opcional)":""}<input name="enq${i}" maxlength="24" value="${esc((d.enqOpcoes||[])[i]||"")}" placeholder="${i===0?"Sim":i===1?"Não":""}"></label>`).join("")}
+   <label class="full">Posição na tela<input type="range" name="enqY" min="15" max="85" value="${+d.enqY||60}"><span class="help">Sem opções preenchidas, a enquete usa "Sim" e "Não". Toque nas opções na prévia para ver o resultado simulado.</span></label>`:""}`:`<div class="sec">Texto</div>
    <label class="full">${F==="artigo"?"Texto do artigo":F==="evento"?"Texto do post sobre o evento":"Legenda"}<textarea name="legenda" id="leg" placeholder="Escreva como vai sair. Quebras de linha, #hashtags e @menções aparecem como na rede.">${esc(d.legenda)}</textarea><span class="counters" id="counters"></span></label>
    <div class="full" id="cutPrev"></div>
    ${(d.redes||[]).includes("ig")?`<label class="full">Primeiro comentário (Instagram)<input name="comentario" value="${esc(d.comentario)}" placeholder="Hashtags ou complemento"></label>`:""}
@@ -763,6 +793,7 @@ function renderPhone(){
   if(focusId&&pendingFocus){pendingFocus=false;const el=scr.querySelector(`[data-pid="${CSS.escape(focusId)}"]`);if(el){if(vf2){vf2.scrollTop=el.offsetTop}else if(!el.closest(".igp-grid")){scr.scrollTop=Math.max(0,el.offsetTop-90)}}}
   setupVideos();
   if(isStoryView())startStory();else stopStory();
+  renderStoryTray();
 }
 let pendingFocus=false;
 function carousel(p,key,items,ratioV,opts={}){const n=items.length;
@@ -825,7 +856,7 @@ function szHTML(kind){if(!opt.safe)return"";
 /* Stories (Instagram e Facebook) */
 let st={i:0,t0:0,paused:false,timer:null,key:"",list:[]};
 function isStoryView(){return(net==="ig"&&view.ig==="stories")||(net==="fb"&&view.fb==="stories")||(net==="wa"&&view.wa==="status")}
-function storiesView(n){const p=liveProfile(),l=postsFor(n,["story"]);const key=n+":"+l.map(x=>x.id).join(",");
+function storiesView(n){const p=liveProfile(),l=postsFor(n,["story"]).slice().sort(storyOrd);const key=n+":"+l.map(x=>x.id).join(",");
   if(key!==st.key){st.key=key;st.list=l;if(edit&&edit.kind==="post"&&edit.d.formato==="story"){const k=l.findIndex(x=>x.id===edit.id);st.i=k<0?0:k;st.paused=true}else{st.i=0;st.paused=false}st.t0=performance.now()}
   st.list=l;if(st.i>=l.length)st.i=0;
   if(!l.length)return`<div class="fsv">${SB(true)}<div class="st-empty">Nenhum story ainda.<br>Crie um post no formato "Story" marcado para o ${NETS[n].n}.<br><br>Use mídia vertical 9:16 (1080 × 1920).</div></div>`;
@@ -834,7 +865,7 @@ function storiesView(n){const p=liveProfile(),l=postsFor(n,["story"]);const key=
    <div class="st-bars">${l.map((_,j)=>`<i><b style="width:${j<st.i?100:0}%" ${j===st.i?'id="stBar"':""}></b></i>`).join("")}</div>
    <div class="st-h">${AV(p,32)}<span>${esc(n==="ig"?p.usuario:p.nome)}${p.verificado&&n==="ig"?VERIF(12):""} <small>${esc(rel(x.data).replace("Agora","agora"))}</small></span><span class="grow"></span>${I("more",22)}${I("x",24)}</div>
    <button class="stctl" type="button" data-act="stpause" aria-label="${st.paused?"Continuar":"Pausar"}">${st.paused?IF("play",14,"#fff"):I("pause",14,2.4)}</button>
-   ${x.link?`<div class="st-link">${I("link",16,2.2)}${esc(x.link.replace(/^https?:\/\//,"").toUpperCase())}</div>`:""}
+   ${n==="ig"&&x.enqPergunta?pollHTML(x):""}${x.link?`<div class="st-link">${I("link",16,2.2)}${esc(x.link.replace(/^https?:\/\//,"").toUpperCase())}</div>`:""}
    <div class="st-zone l" data-act="stprev"></div><div class="st-zone r" data-act="stnext"></div>
    <div class="st-foot"><span class="inp">${n==="ig"?"Enviar mensagem":"Responder…"}</span>${n==="wa"?"":I("heart",26)}${I("send",25)}</div>${szHTML("story")}</div>`}
 function startStory(){stopStory();const bar=$("#stBar");if(!bar)return;const vid=$("#scr [data-stv]");
@@ -937,6 +968,38 @@ function setupVideos(){if(io)io.disconnect();const vids=[...$("#scr").querySelec
   io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting&&e.intersectionRatio>.55&&!v.closest(".tile,.thumb,.mitem,.fb-st")){v.muted=opt.muted;v.play().catch(()=>{})}else v.pause()}),{root:$("#scr"),threshold:[0,.6]});
   vids.forEach(v=>io.observe(v))}
 
+/* ordem dos stories: arrastar dentro do mesmo dia */
+function storyOrd(a,b){return String(a.data||"9").localeCompare(String(b.data||"9"))||((a.ordem??0)-(b.ordem??0))}
+const pollVote={};
+function pollHTML(x){const ops=(x.enqOpcoes||[]).filter(o=>o&&String(o).trim());const list=ops.length>=2?ops:["Sim","Não"];const two=list.length===2;const v=pollVote[x.id];
+  let pc=[];if(v!==undefined){const r=hash(x.id);if(two){const a=Math.round(35+r*40);pc=[a,100-a]}else{const w=list.map((_,i)=>.5+hash(x.id+i));const t=w.reduce((s,y)=>s+y,0);pc=w.map(y=>Math.round(y/t*100))}}
+  const y=Math.min(85,Math.max(15,+x.enqY||60));
+  return`<div class="st-poll" style="top:${y}%"><b>${esc(x.enqPergunta)}</b><div class="opts${two?" two":""}">${list.map((o,i)=>`<button type="button" data-pv="${esc(x.id)}:${i}"${v===i?' class="me"':""}>${v!==undefined&&!two?`<i style="width:${pc[i]}%"></i>`:""}<span>${esc(o)}</span>${v!==undefined?`<em>${pc[i]}%</em>`:""}</button>`).join("")}</div></div>`}
+function renderStoryTray(){const box=$("#sorder");if(!box)return;
+  if(!isStoryView()||!canWrite||(edit&&edit.kind!=="post")){box.hidden=true;box.innerHTML="";return}
+  const n=net==="ig"?"ig":net;const l=posts.filter(x=>x.perfil===cur&&(x.redes||[]).includes(n)&&x.formato==="story").sort(storyOrd);
+  if(l.length<2){box.hidden=true;box.innerHTML="";return}
+  const g={};l.forEach(x=>{const k=(x.data||"").slice(0,10)||"sem";(g[k]=g[k]||[]).push(x)});
+  const now=st.list[st.i]&&st.list[st.i].id;
+  box.hidden=false;
+  box.innerHTML=`<div class="so-h"><b>Ordem dos stories</b><span>Arraste para mudar a ordem dentro do dia. Os horários acompanham a nova ordem.</span></div>${Object.keys(g).sort().map(k=>{const arr=g[k];const lab=k==="sem"?"Sem data":(()=>{const t=new Date(k+"T12:00");return t.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")})();
+    return`<div class="so-g"><div class="so-gl">${esc(lab)}</div><div class="so-row" data-g="${k}">${arr.map((x,i)=>{const m=(x.midias||[])[0];return`<div class="so-it${x.id===now?" on":""}" data-sid="${esc(x.id)}" title="Arraste para reordenar"><div class="so-th">${m?mEl(m):""}</div><span class="so-n">${i+1}</span><span class="so-t">${esc((x.data||"").slice(11,16)||"—")}</span></div>`}).join("")}</div></div>`}).join("")}`}
+let sdrag=null;
+document.addEventListener("pointerdown",e=>{const it=e.target.closest&&e.target.closest(".so-it");if(!it||e.button>0)return;const row=it.parentElement;
+  sdrag={it,row,x0:e.clientX,y0:e.clientY,moved:false,id:it.dataset.sid};it.setPointerCapture&&it.setPointerCapture(e.pointerId)});
+document.addEventListener("pointermove",e=>{if(!sdrag)return;const dx=e.clientX-sdrag.x0,dy=e.clientY-sdrag.y0;
+  if(!sdrag.moved){if(Math.hypot(dx,dy)<6)return;sdrag.moved=true;sdrag.it.classList.add("drag")}
+  e.preventDefault();sdrag.it.style.transform=`translate(${dx}px,${dy}px)`;
+  const sib=[...sdrag.row.children].filter(c=>c!==sdrag.it);let before=null;for(const c of sib){const r=c.getBoundingClientRect();if(e.clientX<r.left+r.width/2&&e.clientY<r.bottom+20){before=c;break}}
+  sib.forEach(c=>c.classList.remove("gap"));if(before)before.classList.add("gap");sdrag.before=before});
+document.addEventListener("pointerup",async e=>{if(!sdrag)return;const d=sdrag;sdrag=null;d.it.style.transform="";d.it.classList.remove("drag");[...d.row.children].forEach(c=>c.classList.remove("gap"));
+  if(!d.moved){const k=st.list.findIndex(x=>x.id===d.id);if(k>=0){st.i=k;st.elapsed=0;st.paused=false;renderPhone()}return}
+  const ids=[...d.row.children].map(c=>c.dataset.sid).filter(x=>x!==d.id);const at=d.before?ids.indexOf(d.before.dataset.sid):ids.length;ids.splice(at<0?ids.length:at,0,d.id);
+  const items=ids.map(id=>posts.find(x=>x.id===id)).filter(Boolean);const times=items.map(x=>x.data||"").filter(Boolean).sort();const all=times.length===items.length;
+  const base=Math.min(...items.map(x=>x.ordem??0));
+  try{for(let i=0;i<items.length;i++){const x=items[i];const ch={ordem:base+i};if(all)ch.data=times[i];if(ch.ordem!==(x.ordem??0)||(all&&ch.data!==x.data)){Object.assign(x,ch);await upd("posts",x.id,ch)}}
+    st.key="";const k=0;toast("Ordem dos stories atualizada");renderAll()}catch(err){failWrite(err)}});
+
 /* ---------- render geral ---------- */
 let rt=0;
 function renderAll(){renderTop();renderSide();renderViews();renderPhone()}
@@ -980,7 +1043,7 @@ function failWrite(err){if(err&&(err.code==="permission_denied"||err.code==="inv
 function readForm(){const f=$("#pf")||$("#pff");if(!f||!edit)return;const d=edit.d;
   f.querySelectorAll("input[name],select[name],textarea[name]").forEach(el=>{const n=el.name;let v=el.type==="checkbox"?el.checked:el.value;
     if(el.type==="number"||el.type==="range")v=v===""?"":+v;
-    if(n.startsWith("m.")){d.metricas=d.metricas||{};d.metricas[n.slice(2)]=v}else if(/^op\d$/.test(n)){d.opcoes=d.opcoes||[];d.opcoes[+n[2]]=v}else d[n]=v})}
+    if(n.startsWith("m.")){d.metricas=d.metricas||{};d.metricas[n.slice(2)]=v}else if(/^op\d$/.test(n)){d.opcoes=d.opcoes||[];d.opcoes[+n[2]]=v}else if(/^enq\d$/.test(n)){d.enqOpcoes=d.enqOpcoes||[];d.enqOpcoes[+n[3]]=v}else d[n]=v})}
 async function savePost(){readForm();const d=edit.d;if(!(d.redes||[]).length)return toast("Escolha pelo menos uma rede.");
   if(uploading)return toast("Espere o envio da mídia terminar.");
   const body={...d};if(!assets&&!localMode)body.midias=(d.midias||[]).filter(m=>m.a);
@@ -1010,6 +1073,7 @@ document.addEventListener("click",e=>{const t=e.target;
   const ar=t.closest("[data-art]");if(ar){artOpen=ar.dataset.art;scrollMem.top=0;$("#scr").scrollTop=0;renderPhone();$("#scr").scrollTop=0;return}
   const cg=t.closest("[data-car-go]");if(cg){const tr=cg.closest(".car").querySelector(".car-track");const i=Math.round(tr.scrollLeft/tr.clientWidth)+(+cg.dataset.carGo);tr.scrollTo({left:i*tr.clientWidth,behavior:"smooth"});return}
   if(carDragMoved){carDragMoved=false;return}
+  const pv=t.closest("[data-pv]");if(pv){const[id,i]=pv.dataset.pv.split(":");pollVote[id]=pollVote[id]===+i?undefined:+i;st.paused=true;renderPhone();return}
   const ex=t.closest("[data-exp]");if(ex){expanded.add(ex.dataset.exp);renderPhone();return}
   const fl=t.closest("[data-filt]");if(fl){filt=fl.dataset.filt;ls.set("sim-filt",filt);renderSide();return}
   const ed=t.closest("[data-edit]");if(ed){if(edit&&edit.kind==="post"&&edit.id!==ed.dataset.edit)readForm();pendingFocus=true;openPost(ed.dataset.edit);return}
