@@ -74,7 +74,7 @@ boot='''(function(){const D=window.__PREVIA;canWrite=false;const r=D.redes||[];
    artOpen=null;st.key="";st.elapsed=0;focusId=id;pendingFocus=true;renderAll();
    if(p.formato==="story"){const k=st.list.findIndex(x=>x.id===id);if(k>=0&&k!==st.i){st.i=k;renderPhone()}}
    strip()}
- box.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)return goPost(g.dataset.go);const c=e.target.closest("[data-dia]");if(!c||c.disabled)return;dia=c.dataset.dia||null;cur1=null;artOpen=null;st.key="";st.elapsed=0;
+ box.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)return goPost(g.dataset.go);const c=e.target.closest("[data-dia]");if(!c||c.disabled)return;dia=c.dataset.dia||null;window.__pvDia=dia;cur1=null;artOpen=null;st.key="";st.elapsed=0;
    if(dia){const ps=per(dia);if(!ps.some(p=>(p.redes||[]).includes(net)&&NETS[net].acc.includes(p.formato))){const r=(ps[0].redes||[]).find(r=>NETS[r]&&NETS[r].acc.includes(ps[0].formato));if(r)net=r}
      const here=ps.filter(p=>(p.redes||[]).includes(net));const feedish=here.some(p=>p.formato!=="story");
      if(net==="ig")view.ig=feedish?"feed":"stories";else if(net==="fb")view.fb=feedish?"feed":"stories";else if(net==="wa")view.wa=feedish?"conversa":"status";else if(net==="tt")view.tt="fyp";else view[net]="feed";
@@ -85,7 +85,7 @@ boot='''(function(){const D=window.__PREVIA;canWrite=false;const r=D.redes||[];
 (function(){const FEED={ig:["foto","carrossel","reel"],fb:["foto","carrossel","reel","texto","link"],wa:["foto","carrossel","reel","texto","link"]};
  function cnt(n,f){return postsFor(n,f).length}
  function prof(n,f){const sv=view[n],sn=net;net=n;view[n]="perfil";const r=postsFor(n,f).length;view[n]=sv;net=sn;return r}
- function has(n,v){if(n==="ig")return v==="perfil"?prof("ig",FEED.ig)>0:cnt("ig",v==="stories"?["story"]:v==="reels"?["reel"]:FEED.ig)>0;
+ function has(n,v){if(v==="perfil"&&window.__pvDia)return false;if(n==="ig")return v==="perfil"?prof("ig",FEED.ig)>0:cnt("ig",v==="stories"?["story"]:v==="reels"?["reel"]:FEED.ig)>0;
    if(n==="tt")return v==="perfil"?prof("tt"):cnt("tt")>0;
    if(n==="fb")return cnt("fb",v==="stories"?["story"]:FEED.fb)>0;
    if(n==="wa")return cnt("wa",v==="status"?["story"]:FEED.wa)>0;
