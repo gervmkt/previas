@@ -19,8 +19,8 @@ rep('  db.collection("posts").onSnapshot(','''  db.doc("config/visao").onSnapsho
   db.collection("posts").onSnapshot(''')
 rep('''<h2 style="flex:1">Posts</h2><button class="btn primary sm" type="button" data-act="newpost"${canWrite?"":" disabled"}>Novo post</button>''','<h2 style="flex:1">Posts</h2>')
 rep('''"Nenhum post ainda. Clique em \\"Novo post\\", suba as imagens ou o vídeo e veja na hora como fica no feed."''','"Nenhum post ainda."')
-rep('''A ordem da lista é a ordem do perfil (o primeiro é o mais recente). Para reorganizar a grade, arraste os quadrados na tela Perfil do Instagram.''','''Clique num post para vê-lo no celular. Para comentar ou aprovar, use os comentários desta página.''')
-rep('data-edit="${esc(p.id)}" tabindex="0" role="button"','data-see="${esc(p.id)}" tabindex="0" role="button"')
+rep('''Os posts aparecem por dia de publicação. Para mudar a ordem dos stories de um dia, arraste pela alça ⠿; os horários acompanham. Para reorganizar a grade do Instagram, arraste os quadrados na tela Perfil.''','''Clique num post para vê-lo no celular. Para comentar ou aprovar, use os comentários desta página.''')
+rep('data-edit="${esc(p.id)}"${drag?','data-see="${esc(p.id)}"${drag?')
 rep('  const ed=t.closest("[data-edit]");','''  const se=t.closest("[data-see]");if(se){const p=posts.find(x=>x.id===se.dataset.see);if(p){focusId=p.id;pendingFocus=true;if(!(p.redes||[]).includes(net)||!NETS[net].acc.includes(p.formato)){net=(p.redes||[]).find(r=>NETS[r].acc.includes(p.formato))||net}autoView(p);if(net==="ig"&&view.ig==="perfil")view.ig="feed";artOpen=null;renderAll();if(innerWidth<=980)$(".stage").scrollIntoView({block:"start",behavior:"smooth"})}return}
   const ed=t.closest("[data-edit]");''')
 rep('document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-edit]"))e.target.click();','document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("[data-see]"))e.target.click();')
