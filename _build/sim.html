@@ -77,6 +77,14 @@ main{padding-block:20px 56px}
 /* lista de posts */
 .plist{display:flex;flex-direction:column}
 .prow{display:flex;gap:12px;align-items:center;padding:10px 6px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.pgroup{border-top:1px solid var(--line);padding-top:6px;margin-top:4px}.pgroup:first-child{border-top:0;margin-top:0;padding-top:0}
+.pgl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 6px 2px}
+.pgroup .prow{border-top:0}
+.handle{flex:none;width:22px;align-self:stretch;display:grid;place-items:center;font-size:18px;color:var(--muted);cursor:grab;touch-action:none;user-select:none;border-radius:6px}
+.handle:hover{background:var(--sunk);color:var(--fg)}
+.prow.drag{position:relative;z-index:5;background:var(--surface);box-shadow:0 8px 20px rgb(0 0 0/.18);cursor:grabbing;transition:none}
+.prow.gap-t{box-shadow:inset 0 3px 0 var(--yellow)}
+.prow.gap-b{box-shadow:inset 0 -3px 0 var(--yellow)}
 .prow:hover{background:var(--sunk)}
 .prow.sel{background:var(--brand-soft)}
 .thumb{width:52px;height:52px;border-radius:8px;overflow:hidden;background:var(--sunk);flex:none;display:grid;place-items:center;color:var(--muted);position:relative}
@@ -149,19 +157,6 @@ input[type=range]{padding:0;background:none}
 .st-poll .opts.two button span{font-size:21px;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#4f5bd5,#d62976,#fa7e1e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .st-poll .opts.two button em{font-size:13px;font-weight:700;color:#555}
 .st-poll .opts button.me{outline:2px solid #d62976;outline-offset:-2px}
-.sorder{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-.sorder[hidden]{display:none}
-.so-h{display:flex;flex-direction:column;gap:2px}.so-h b{font-size:14px}.so-h span{font-size:12.5px;color:var(--muted)}
-.so-gl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-.so-row{display:flex;gap:8px;flex-wrap:wrap}
-.so-it{position:relative;width:62px;cursor:grab;touch-action:none;user-select:none;transition:margin .12s}
-.so-it.drag{cursor:grabbing;z-index:5;opacity:.9;transition:none}
-.so-it.gap{margin-left:22px}
-.so-th{width:62px;height:100px;border-radius:9px;overflow:hidden;background:var(--sunk);border:2px solid transparent}
-.so-it.on .so-th{border-color:var(--yellow)}
-.so-th img,.so-th video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.so-n{position:absolute;top:4px;left:4px;background:var(--ink);color:var(--yellow);font:800 11px/18px var(--font);min-width:18px;height:18px;border-radius:99px;text-align:center}
-.so-t{display:block;text-align:center;font:600 11.5px/1.6 var(--mono);color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--yellow);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60}
 
 /* ===== celular ===== */
@@ -647,17 +642,20 @@ function renderSide(){
   const l=mine.filter(x=>!filt||x.status===filt||(filt==="rede:"+net&&(x.redes||[]).includes(net)));
   const cnt=k=>mine.filter(x=>x.status===k).length;
   $("#side").innerHTML=`<div class="panel"><div class="pcard">${AV(p,56)}<div style="flex:1;min-width:0"><div class="nm">${esc(p.nome||"")}${p.verificado?VERIF(15):""}</div><div class="rsub">@${esc(p.usuario||"")} · ${fmtN(p.seguidores)} seguidores</div>${p.headline?`<div class="rsub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.headline)}</div>`:""}${shareLine(p)}</div><div class="acts" style="flex-direction:column;align-items:stretch;gap:6px"><button class="btn sm primary" type="button" data-act="share"${canWrite?"":" disabled"}>Compartilhar</button><button class="btn sm" type="button" data-act="editpf"${canWrite?"":" disabled"}>Editar perfil</button></div></div></div>
-  <div class="sorder" id="sorder" hidden></div>
   <div class="panel">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"><h2 style="flex:1">Posts</h2><button class="btn primary sm" type="button" data-act="newpost"${canWrite?"":" disabled"}>Novo post</button></div>
     <div class="chips" style="margin-bottom:10px"><button class="chip" type="button" data-filt="" aria-pressed="${!filt}">Todos ${mine.length}</button>${STAT.filter(s=>cnt(s[0])).map(s=>`<button class="chip" type="button" data-filt="${s[0]}" aria-pressed="${filt===s[0]}">${s[1]} ${cnt(s[0])}</button>`).join("")}</div>
-    <div class="plist">${l.length?l.map(rowHTML).join(""):`<div class="empty">${mine.length?"Nada com esse filtro.":"Nenhum post ainda. Clique em \"Novo post\", suba as imagens ou o vídeo e veja na hora como fica no feed."}</div>`}</div>
-    <p class="help" style="margin:10px 0 0">A ordem da lista é a ordem do perfil (o primeiro é o mais recente). Para reorganizar a grade, arraste os quadrados na tela Perfil do Instagram.</p>
+    <div class="plist">${l.length?groupRows(l):`<div class="empty">${mine.length?"Nada com esse filtro.":"Nenhum post ainda. Clique em \"Novo post\", suba as imagens ou o vídeo e veja na hora como fica no feed."}</div>`}</div>
+    <p class="help" style="margin:10px 0 0">Os posts aparecem por dia de publicação. Para mudar a ordem dos stories de um dia, arraste pela alça ⠿; os horários acompanham. Para reorganizar a grade do Instagram, arraste os quadrados na tela Perfil.</p>
   </div>`;
 }
-function rowHTML(p){const m=(p.capa&&p.formato==="reel")?p.capa:(p.midias||[])[0];const s=STN[p.status]||STAT[1];
+function groupRows(l){const g={};l.forEach(x=>{const k=(x.data||"").slice(0,10)||"sem";(g[k]=g[k]||[]).push(x)});
+  return Object.keys(g).sort((a,b)=>a==="sem"?1:b==="sem"?-1:a.localeCompare(b)).map(k=>{const arr=g[k].sort(storyOrd);const ns=arr.filter(x=>x.formato==="story").length;
+    const lab=k==="sem"?"Sem data":new Date(k+"T12:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"});
+    return`<div class="pgroup" data-g="${k}"><div class="pgl">${esc(lab)}</div>${arr.map(x=>rowHTML(x,ns>1&&x.formato==="story"&&canWrite)).join("")}</div>`}).join("")}
+function rowHTML(p,drag){const m=(p.capa&&p.formato==="reel")?p.capa:(p.midias||[])[0];const s=STN[p.status]||STAT[1];
   const t=p.formato==="artigo"&&p.artTitulo||p.formato==="enquete"&&p.pergunta||p.formato==="evento"&&p.evNome||(p.formato==="artigo"?p.chamada:"")||(p.legenda||"").split("\n")[0]||(p.formato==="link"&&p.linkTitulo)||"(sem legenda)";
-  return`<div class="prow${focusId===p.id?" sel":""}" data-edit="${esc(p.id)}" tabindex="0" role="button"><div class="thumb">${m?mEl(m):I(FMT[p.formato]?.[1]||"image",22)}${p.formato==="carrossel"?`<span class="badge">${I("stack",14)}</span>`:p.formato==="reel"?`<span class="badge">${IF("play",12,"#fff")}</span>`:""}</div>
+  return`<div class="prow${focusId===p.id?" sel":""}" data-edit="${esc(p.id)}"${drag?` data-sid="${esc(p.id)}"`:""} tabindex="0" role="button">${drag?`<span class="handle" title="Arraste para mudar a ordem" aria-label="Arrastar">⠿</span>`:""}<div class="thumb">${m?mEl(m):I(FMT[p.formato]?.[1]||"image",22)}${p.formato==="carrossel"?`<span class="badge">${I("stack",14)}</span>`:p.formato==="reel"?`<span class="badge">${IF("play",12,"#fff")}</span>`:""}</div>
   <div style="flex:1;min-width:0"><div class="rname">${esc(t)}</div><div class="rsub">${esc(FMT[p.formato]?.[0]||"")} · ${(p.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")||"sem rede"}${p.data?" · "+esc(fmtShort(p.data)):""}</div></div><span class="pill ${s[2]}">${s[1]}</span></div>`}
 
 /* ---------- editor de post ---------- */
@@ -793,7 +791,6 @@ function renderPhone(){
   if(focusId&&pendingFocus){pendingFocus=false;const el=scr.querySelector(`[data-pid="${CSS.escape(focusId)}"]`);if(el){if(vf2){vf2.scrollTop=el.offsetTop}else if(!el.closest(".igp-grid")){scr.scrollTop=Math.max(0,el.offsetTop-90)}}}
   setupVideos();
   if(isStoryView())startStory();else stopStory();
-  renderStoryTray();
 }
 let pendingFocus=false;
 function carousel(p,key,items,ratioV,opts={}){const n=items.length;
@@ -975,31 +972,21 @@ function pollHTML(x){const ops=(x.enqOpcoes||[]).filter(o=>o&&String(o).trim());
   let pc=[];if(v!==undefined){const r=hash(x.id);if(two){const a=Math.round(35+r*40);pc=[a,100-a]}else{const w=list.map((_,i)=>.5+hash(x.id+i));const t=w.reduce((s,y)=>s+y,0);pc=w.map(y=>Math.round(y/t*100))}}
   const y=Math.min(85,Math.max(15,+x.enqY||60));
   return`<div class="st-poll" style="top:${y}%"><b>${esc(x.enqPergunta)}</b><div class="opts${two?" two":""}">${list.map((o,i)=>`<button type="button" data-pv="${esc(x.id)}:${i}"${v===i?' class="me"':""}>${v!==undefined&&!two?`<i style="width:${pc[i]}%"></i>`:""}<span>${esc(o)}</span>${v!==undefined?`<em>${pc[i]}%</em>`:""}</button>`).join("")}</div></div>`}
-function renderStoryTray(){const box=$("#sorder");if(!box)return;
-  if(!isStoryView()||!canWrite||(edit&&edit.kind!=="post")){box.hidden=true;box.innerHTML="";return}
-  const n=net==="ig"?"ig":net;const l=posts.filter(x=>x.perfil===cur&&(x.redes||[]).includes(n)&&x.formato==="story").sort(storyOrd);
-  if(l.length<2){box.hidden=true;box.innerHTML="";return}
-  const g={};l.forEach(x=>{const k=(x.data||"").slice(0,10)||"sem";(g[k]=g[k]||[]).push(x)});
-  const now=st.list[st.i]&&st.list[st.i].id;
-  box.hidden=false;
-  box.innerHTML=`<div class="so-h"><b>Ordem dos stories</b><span>Arraste para mudar a ordem dentro do dia. Os horários acompanham a nova ordem.</span></div>${Object.keys(g).sort().map(k=>{const arr=g[k];const lab=k==="sem"?"Sem data":(()=>{const t=new Date(k+"T12:00");return t.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}).replace(".","")})();
-    return`<div class="so-g"><div class="so-gl">${esc(lab)}</div><div class="so-row" data-g="${k}">${arr.map((x,i)=>{const m=(x.midias||[])[0];return`<div class="so-it${x.id===now?" on":""}" data-sid="${esc(x.id)}" title="Arraste para reordenar"><div class="so-th">${m?mEl(m):""}</div><span class="so-n">${i+1}</span><span class="so-t">${esc((x.data||"").slice(11,16)||"—")}</span></div>`}).join("")}</div></div>`}).join("")}`}
-let sdrag=null;
-document.addEventListener("pointerdown",e=>{const it=e.target.closest&&e.target.closest(".so-it");if(!it||e.button>0)return;const row=it.parentElement;
-  sdrag={it,row,x0:e.clientX,y0:e.clientY,moved:false,id:it.dataset.sid};it.setPointerCapture&&it.setPointerCapture(e.pointerId)});
-document.addEventListener("pointermove",e=>{if(!sdrag)return;const dx=e.clientX-sdrag.x0,dy=e.clientY-sdrag.y0;
-  if(!sdrag.moved){if(Math.hypot(dx,dy)<6)return;sdrag.moved=true;sdrag.it.classList.add("drag")}
-  e.preventDefault();sdrag.it.style.transform=`translate(${dx}px,${dy}px)`;
-  const sib=[...sdrag.row.children].filter(c=>c!==sdrag.it);let before=null;for(const c of sib){const r=c.getBoundingClientRect();if(e.clientX<r.left+r.width/2&&e.clientY<r.bottom+20){before=c;break}}
-  sib.forEach(c=>c.classList.remove("gap"));if(before)before.classList.add("gap");sdrag.before=before});
-document.addEventListener("pointerup",async e=>{if(!sdrag)return;const d=sdrag;sdrag=null;d.it.style.transform="";d.it.classList.remove("drag");[...d.row.children].forEach(c=>c.classList.remove("gap"));
-  if(!d.moved){const k=st.list.findIndex(x=>x.id===d.id);if(k>=0){st.i=k;st.elapsed=0;st.paused=false;renderPhone()}return}
-  const ids=[...d.row.children].map(c=>c.dataset.sid).filter(x=>x!==d.id);const at=d.before?ids.indexOf(d.before.dataset.sid):ids.length;ids.splice(at<0?ids.length:at,0,d.id);
+let sdrag=null,sdragJust=false;
+document.addEventListener("pointerdown",e=>{const h=e.target.closest&&e.target.closest(".prow .handle");if(!h||e.button>0)return;const it=h.closest(".prow");
+  e.preventDefault();sdrag={it,grp:it.parentElement,y0:e.clientY,moved:false,id:it.dataset.sid};h.setPointerCapture&&h.setPointerCapture(e.pointerId)});
+document.addEventListener("pointermove",e=>{if(!sdrag)return;const dy=e.clientY-sdrag.y0;
+  if(!sdrag.moved){if(Math.abs(dy)<4)return;sdrag.moved=true;sdrag.it.classList.add("drag")}
+  e.preventDefault();sdrag.it.style.transform=`translateY(${dy}px)`;
+  const sib=[...sdrag.grp.querySelectorAll(".prow[data-sid]")].filter(c=>c!==sdrag.it);let before=null;for(const c of sib){const r=c.getBoundingClientRect();if(e.clientY<r.top+r.height/2){before=c;break}}
+  sib.forEach(c=>c.classList.remove("gap-t","gap-b"));if(before)before.classList.add("gap-t");else if(sib.length)sib[sib.length-1].classList.add("gap-b");sdrag.before=before});
+document.addEventListener("pointerup",async e=>{if(!sdrag)return;const d=sdrag;sdrag=null;d.it.style.transform="";d.it.classList.remove("drag");d.grp.querySelectorAll(".prow").forEach(c=>c.classList.remove("gap-t","gap-b"));
+  if(!d.moved)return;sdragJust=true;setTimeout(()=>sdragJust=false,60);
+  const ids=[...d.grp.querySelectorAll(".prow[data-sid]")].map(c=>c.dataset.sid).filter(x=>x!==d.id);const at=d.before?ids.indexOf(d.before.dataset.sid):ids.length;ids.splice(at<0?ids.length:at,0,d.id);
   const items=ids.map(id=>posts.find(x=>x.id===id)).filter(Boolean);const times=items.map(x=>x.data||"").filter(Boolean).sort();const all=times.length===items.length;
   const base=Math.min(...items.map(x=>x.ordem??0));
   try{for(let i=0;i<items.length;i++){const x=items[i];const ch={ordem:base+i};if(all)ch.data=times[i];if(ch.ordem!==(x.ordem??0)||(all&&ch.data!==x.data)){Object.assign(x,ch);await upd("posts",x.id,ch)}}
-    st.key="";const k=0;toast("Ordem dos stories atualizada");renderAll()}catch(err){failWrite(err)}});
-
+    st.key="";toast("Ordem dos stories atualizada");renderAll()}catch(err){failWrite(err)}});
 /* ---------- render geral ---------- */
 let rt=0;
 function renderAll(){renderTop();renderSide();renderViews();renderPhone()}
@@ -1076,6 +1063,7 @@ document.addEventListener("click",e=>{const t=e.target;
   const pv=t.closest("[data-pv]");if(pv){const[id,i]=pv.dataset.pv.split(":");pollVote[id]=pollVote[id]===+i?undefined:+i;st.paused=true;renderPhone();return}
   const ex=t.closest("[data-exp]");if(ex){expanded.add(ex.dataset.exp);renderPhone();return}
   const fl=t.closest("[data-filt]");if(fl){filt=fl.dataset.filt;ls.set("sim-filt",filt);renderSide();return}
+  if(t.closest(".handle")||sdragJust)return;
   const ed=t.closest("[data-edit]");if(ed){if(edit&&edit.kind==="post"&&edit.id!==ed.dataset.edit)readForm();pendingFocus=true;openPost(ed.dataset.edit);return}
   const pg=t.closest("[data-pfgo]");if(pg){cur=pg.dataset.pfgo;ls.set("sim-pf",cur);renderAll();return}
   const per=t.closest("[data-per]");if(per&&edit&&edit.kind==="share"){readShare();const k=per.dataset.per;edit.d.perCustom=k==="custom";edit.d.periodo=k==="esta"?semanaDe(0):k==="proxima"?semanaDe(1):k==="custom"?(edit.d.periodo&&edit.d.periodo.ini?edit.d.periodo:semanaDe(0)):null;renderSide();return}
