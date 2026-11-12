@@ -146,17 +146,17 @@ input[type=range]{padding:0;background:none}
 .prog-steps .done{color:var(--fg)}
 .prog-steps .on{color:var(--fg);font-weight:700}
 .num{font-variant-numeric:tabular-nums;font-weight:700}
-.st-poll{position:absolute;left:50%;transform:translate(-50%,-50%);width:74%;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgb(0 0 0/.28);z-index:6;color:#111;text-align:center;overflow:hidden}
-.st-poll>b{display:block;padding:14px 14px 10px;font-size:16px;line-height:1.25;font-weight:700}
+.st-poll{position:absolute;left:50%;transform:translate(-50%,-50%);transform-origin:center;width:74%;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgb(0 0 0/.28);z-index:6;color:#111;text-align:center;overflow:hidden}
+.st-poll>b{display:block;padding:13px 14px 10px;font-size:14.5px;line-height:1.3;font-weight:700}
 .st-poll .opts{display:flex;flex-direction:column;gap:6px;padding:0 12px 12px}
-.st-poll .opts button{position:relative;overflow:hidden;background:#efefef!important;border-radius:10px;padding:10px 12px!important;font-weight:700!important;font-size:14px!important;display:flex;justify-content:space-between;align-items:center;color:#111!important}
+.st-poll .opts button{position:relative;overflow:hidden;background:#efefef!important;border-radius:10px;padding:9px 12px!important;font-weight:600!important;font-size:13px!important;display:flex;justify-content:space-between;align-items:center;color:#111!important}
 .st-poll .opts button i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#c7d2fe,#fbcfe8);z-index:0;transition:width .4s}
 .st-poll .opts button span,.st-poll .opts button em{position:relative;z-index:1;font-style:normal}
 .st-poll .opts.two{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0;border-top:1px solid #e6e6e6}
-.st-poll .opts.two button{background:#fff!important;border-radius:0;padding:14px 6px!important;flex-direction:column;justify-content:center;gap:2px}
+.st-poll .opts.two button{background:#fff!important;border-radius:0;padding:11px 6px!important;flex-direction:column;justify-content:center;gap:2px}
 .st-poll .opts.two button+button{border-left:1px solid #e6e6e6}
-.st-poll .opts.two button span{font-size:21px;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#4f5bd5,#d62976,#fa7e1e);-webkit-background-clip:text;background-clip:text;color:transparent}
-.st-poll .opts.two button em{font-size:13px;font-weight:700;color:#555}
+.st-poll .opts.two button span{font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;background:linear-gradient(90deg,#4f5bd5,#d62976,#fa7e1e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.st-poll .opts.two button em{font-size:11.5px;font-weight:700;color:#666}
 .st-poll .opts button.me{outline:2px solid #d62976;outline-offset:-2px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--yellow);padding:9px 16px;border-radius:99px;font-size:14px;font-weight:600;z-index:60}
 
@@ -704,7 +704,9 @@ function renderPostEditor(){const d=edit.d,ok=canWrite;
    ${(d.redes||[]).includes("ig")?`<div class="sec">Enquete no story (opcional, Instagram)</div>
    <label class="full">Pergunta<input name="enqPergunta" maxlength="80" value="${esc(d.enqPergunta)}" placeholder="Ex.: Você já contratou pelo LinkedIn?"></label>
    ${[0,1,2,3].map(i=>`<label>Opção ${i+1}${i>1?" (opcional)":""}<input name="enq${i}" maxlength="24" value="${esc((d.enqOpcoes||[])[i]||"")}" placeholder="${i===0?"Sim":i===1?"Não":""}"></label>`).join("")}
-   <label class="full">Posição na tela<input type="range" name="enqY" min="15" max="85" value="${+d.enqY||60}"><span class="help">Sem opções preenchidas, a enquete usa "Sim" e "Não". Toque nas opções na prévia para ver o resultado simulado.</span></label>`:""}`:`<div class="sec">Texto</div>
+   <label>Posição na tela<input type="range" name="enqY" min="15" max="85" value="${+d.enqY||60}"></label>
+   <label>Tamanho<input type="range" name="enqTam" min="55" max="110" value="${+d.enqTam||85}"></label>
+   <label class="full"><span class="help">Sem opções preenchidas, a enquete usa "Sim" e "Não". Toque nas opções na prévia para ver o resultado simulado.</span></label>`:""}`:`<div class="sec">Texto</div>
    <label class="full">${F==="artigo"?"Texto do artigo":F==="evento"?"Texto do post sobre o evento":"Legenda"}<textarea name="legenda" id="leg" placeholder="Escreva como vai sair. Quebras de linha, #hashtags e @menções aparecem como na rede.">${esc(d.legenda)}</textarea><span class="counters" id="counters"></span></label>
    <div class="full" id="cutPrev"></div>
    ${(d.redes||[]).includes("ig")?`<label class="full">Primeiro comentário (Instagram)<input name="comentario" value="${esc(d.comentario)}" placeholder="Hashtags ou complemento"></label>`:""}
@@ -972,8 +974,8 @@ function storyOrd(a,b){return String(a.data||"9").localeCompare(String(b.data||"
 const pollVote={};
 function pollHTML(x){const ops=(x.enqOpcoes||[]).filter(o=>o&&String(o).trim());const list=ops.length>=2?ops:["Sim","Não"];const two=list.length===2;const v=pollVote[x.id];
   let pc=[];if(v!==undefined){const r=hash(x.id);if(two){const a=Math.round(35+r*40);pc=[a,100-a]}else{const w=list.map((_,i)=>.5+hash(x.id+i));const t=w.reduce((s,y)=>s+y,0);pc=w.map(y=>Math.round(y/t*100))}}
-  const y=Math.min(85,Math.max(15,+x.enqY||60));
-  return`<div class="st-poll" style="top:${y}%"><b>${esc(x.enqPergunta)}</b><div class="opts${two?" two":""}">${list.map((o,i)=>`<button type="button" data-pv="${esc(x.id)}:${i}"${v===i?' class="me"':""}>${v!==undefined&&!two?`<i style="width:${pc[i]}%"></i>`:""}<span>${esc(o)}</span>${v!==undefined?`<em>${pc[i]}%</em>`:""}</button>`).join("")}</div></div>`}
+  const y=Math.min(85,Math.max(15,+x.enqY||60)),k=Math.min(110,Math.max(55,+x.enqTam||85))/100;
+  return`<div class="st-poll" style="top:${y}%;transform:translate(-50%,-50%) scale(${k})"><b>${esc(x.enqPergunta)}</b><div class="opts${two?" two":""}">${list.map((o,i)=>`<button type="button" data-pv="${esc(x.id)}:${i}"${v===i?' class="me"':""}>${v!==undefined&&!two?`<i style="width:${pc[i]}%"></i>`:""}<span>${esc(o)}</span>${v!==undefined?`<em>${pc[i]}%</em>`:""}</button>`).join("")}</div></div>`}
 let sdrag=null,sdragJust=false;
 document.addEventListener("pointerdown",e=>{const h=e.target.closest&&e.target.closest(".prow .handle");if(!h||e.button>0)return;const it=h.closest(".prow");
   e.preventDefault();sdrag={it,grp:it.parentElement,y0:e.clientY,moved:false,id:it.dataset.sid};h.setPointerCapture&&h.setPointerCapture(e.pointerId)});
