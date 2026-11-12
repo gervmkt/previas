@@ -20,7 +20,7 @@ for f in sorted(os.listdir(posts_dir)):
     if PINI:
         dt=(x.get("data") or "")[:10]
         if not dt or dt<PINI or dt>PFIM:continue
-    x.pop("notas",None);x["perfil"]=perfil["id"];posts.append(x)
+    x.pop("notas",None);x.pop("titulo",None);x["perfil"]=perfil["id"];posts.append(x)
 site=os.path.join(out,slug);os.makedirs(os.path.join(site,"media"),exist_ok=True)
 files={f.rsplit(".",1)[0]:f for f in os.listdir(mdir)}
 def fix(m):

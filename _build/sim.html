@@ -91,6 +91,7 @@ main{padding-block:20px 56px}
 .thumb img,.thumb video{width:100%;height:100%;object-fit:cover;display:block}
 .thumb .badge{position:absolute;right:3px;top:3px;color:#fff;filter:drop-shadow(0 1px 2px rgb(0 0 0/.6))}
 .rname{font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rname.untitled{color:var(--muted);font-weight:600;font-style:italic}
 .rsub{font-size:13px;color:var(--muted);line-height:1.35}
 .empty{color:var(--muted);font-size:14px;padding:18px 4px;text-align:center}
 /* editor */
@@ -654,9 +655,9 @@ function groupRows(l){const g={};l.forEach(x=>{const k=(x.data||"").slice(0,10)|
     const lab=k==="sem"?"Sem data":new Date(k+"T12:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"});
     return`<div class="pgroup" data-g="${k}"><div class="pgl">${esc(lab)}</div>${arr.map(x=>rowHTML(x,ns>1&&x.formato==="story"&&canWrite)).join("")}</div>`}).join("")}
 function rowHTML(p,drag){const m=(p.capa&&p.formato==="reel")?p.capa:(p.midias||[])[0];const s=STN[p.status]||STAT[1];
-  const t=p.formato==="artigo"&&p.artTitulo||p.formato==="enquete"&&p.pergunta||p.formato==="evento"&&p.evNome||(p.formato==="artigo"?p.chamada:"")||(p.legenda||"").split("\n")[0]||(p.formato==="link"&&p.linkTitulo)||"(sem legenda)";
+  const t=(p.titulo||"").trim()||p.formato==="story"&&(p.enqPergunta?"Story · "+p.enqPergunta:"Story sem título")||p.formato==="artigo"&&p.artTitulo||p.formato==="enquete"&&p.pergunta||p.formato==="evento"&&p.evNome||(p.formato==="artigo"?p.chamada:"")||(p.legenda||"").split("\n")[0]||(p.formato==="link"&&p.linkTitulo)||"(sem legenda)";
   return`<div class="prow${focusId===p.id?" sel":""}" data-edit="${esc(p.id)}"${drag?` data-sid="${esc(p.id)}"`:""} tabindex="0" role="button">${drag?`<span class="handle" title="Arraste para mudar a ordem" aria-label="Arrastar">⠿</span>`:""}<div class="thumb">${m?mEl(m):I(FMT[p.formato]?.[1]||"image",22)}${p.formato==="carrossel"?`<span class="badge">${I("stack",14)}</span>`:p.formato==="reel"?`<span class="badge">${IF("play",12,"#fff")}</span>`:""}</div>
-  <div style="flex:1;min-width:0"><div class="rname">${esc(t)}</div><div class="rsub">${esc(FMT[p.formato]?.[0]||"")} · ${(p.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")||"sem rede"}${p.data?" · "+esc(fmtShort(p.data)):""}</div></div><span class="pill ${s[2]}">${s[1]}</span></div>`}
+  <div style="flex:1;min-width:0"><div class="rname${(p.titulo||"").trim()?"":" untitled"}">${esc(t)}</div><div class="rsub">${esc(FMT[p.formato]?.[0]||"")} · ${(p.redes||[]).map(r=>NETS[r]?.n).filter(Boolean).join(", ")||"sem rede"}${p.data?" · "+esc(fmtShort(p.data)):""}</div></div><span class="pill ${s[2]}">${s[1]}</span></div>`}
 
 /* ---------- editor de post ---------- */
 function newPost(){const mn=Math.min(0,...posts.filter(p=>p.perfil===cur).map(p=>p.ordem??0));
@@ -674,6 +675,7 @@ function renderPostEditor(){const d=edit.d,ok=canWrite;
   const many=d.formato==="carrossel",isV=d.formato==="reel",isS=d.formato==="story",isT=d.formato==="texto"||d.formato==="enquete",isC=CARDF.includes(d.formato),F=d.formato;
   $("#side").innerHTML=`<div class="panel"><form id="pf" class="fields" autocomplete="off" onsubmit="return false">
    <div class="full" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">${edit.isNew?"Novo post":"Editar post"}</h2><button class="btn sm mobonly" type="button" data-act="toprev">Ver prévia</button><button class="btn sm" type="button" data-act="cancel">Fechar</button></div>
+   <label class="full">Título (só para você se organizar)<input name="titulo" maxlength="80" value="${esc(d.titulo)}" placeholder="${d.formato==="story"?"Ex.: Story 1 · pergunta sobre vagas":"Ex.: Carrossel processo seletivo"}"><span class="help">Aparece só na sua lista de posts. Não vai para a prévia do cliente.</span></label>
    <div class="full"><h3 style="margin-bottom:6px">Formato</h3><div class="chips">${fmts}</div></div>
    <div class="full"><h3 style="margin-bottom:6px">Redes</h3><div class="chips">${reds}</div></div>
    ${isT?"":`<div class="sec">${isV?"Vídeo":isC?"Imagem de capa":"Mídia"}</div>
